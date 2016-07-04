@@ -89,10 +89,10 @@ public class MockPolicy {
             String content = mockPolicyConfiguration.getContent();
             boolean hasContent = (content != null && content.length() > 0);
 
+            Buffer buffer = null;
             if (hasContent) {
-                content = executionContext.getTemplateEngine().convert(content);
-
-                clientResponse.headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()));
+                buffer = Buffer.buffer(executionContext.getTemplateEngine().convert(content));
+                clientResponse.headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
                 // Trying to discover content type
                 if (! clientResponse.headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
                     clientResponse.headers.set(HttpHeaders.CONTENT_TYPE, getContentType(content));
@@ -101,10 +101,10 @@ public class MockPolicy {
 
             clientResponseHandler.handle(clientResponse);
 
-            if (hasContent) {
-                clientResponse.bodyHandler.handle(Buffer.buffer(content));
+            if (hasContent && buffer != null) {
+                clientResponse.bodyHandler.handle(buffer);
             }
-            
+
             clientResponse.endHandler.handle(null);
         }
     }
