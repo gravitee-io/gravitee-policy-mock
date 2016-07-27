@@ -121,10 +121,12 @@ public class MockPolicy {
         }
 
         private void init() {
-            mockPolicyConfiguration.getHeaders()
-                    .stream()
-                    .filter(header -> header.getName() != null && !header.getName().trim().isEmpty())
-                    .forEach(header -> headers.add(header.getName(), header.getValue()));
+            if (mockPolicyConfiguration.getHeaders() != null) {
+                mockPolicyConfiguration.getHeaders()
+                        .stream()
+                        .filter(header -> header.getName() != null && !header.getName().trim().isEmpty())
+                        .forEach(header -> headers.add(header.getName(), header.getValue()));
+            }
         }
 
         @Override
