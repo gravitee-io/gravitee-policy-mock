@@ -16,16 +16,21 @@
 package io.gravitee.policy.mock;
 
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.gateway.api.*;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Invoker;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.proxy.ProxyConnection;
+import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
 import io.gravitee.policy.mock.utils.StringUtils;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MockPolicy {
@@ -51,36 +56,31 @@ public class MockPolicy {
     class MockInvoker implements Invoker {
 
         @Override
-        public ClientRequest invoke(ExecutionContext executionContext, Request serverRequest, Handler<ClientResponse> result) {
-            final ClientRequest clientRequest = new MockClientRequest(executionContext, new MockClientResponse(), result);
+        public ProxyConnection invoke(ExecutionContext executionContext, Request serverRequest, Handler<ProxyResponse> result) {
+            final ProxyConnection proxyConnection = new MockProxyConnection(executionContext, new MockClientResponse(), result);
 
             serverRequest
-                    .bodyHandler(clientRequest::write)
-                    .endHandler(endResult -> clientRequest.end());
+                    .bodyHandler(proxyConnection::write)
+                    .endHandler(endResult -> proxyConnection.end());
 
-            return clientRequest;
+            return proxyConnection;
         }
     }
 
-    class MockClientRequest implements ClientRequest {
+    class MockProxyConnection implements ProxyConnection {
 
         private final ExecutionContext executionContext;
         private final MockClientResponse clientResponse;
-        private final Handler<ClientResponse> clientResponseHandler;
+        private final Handler<ProxyResponse> proxyResponseHandler;
 
-        MockClientRequest(final ExecutionContext executionContext, final MockClientResponse clientResponse, final Handler<ClientResponse> clientResponseHandler) {
+        MockProxyConnection(final ExecutionContext executionContext, final MockClientResponse clientResponse, final Handler<ProxyResponse> proxyResponseHandler) {
             this.executionContext = executionContext;
             this.clientResponse = clientResponse;
-            this.clientResponseHandler = clientResponseHandler;
+            this.proxyResponseHandler = proxyResponseHandler;
         }
 
         @Override
-        public ClientRequest connectTimeoutHandler(Handler<Throwable> timeoutHandler) {
-            return this;
-        }
-
-        @Override
-        public ClientRequest write(Buffer chunk) {
+        public ProxyConnection write(Buffer chunk) {
             return this;
         }
 
@@ -99,7 +99,7 @@ public class MockPolicy {
                 }
             }
 
-            clientResponseHandler.handle(clientResponse);
+            proxyResponseHandler.handle(clientResponse);
 
             if (hasContent && buffer != null) {
                 clientResponse.bodyHandler.handle(buffer);
@@ -109,7 +109,7 @@ public class MockPolicy {
         }
     }
 
-    class MockClientResponse implements ClientResponse {
+    class MockClientResponse implements ProxyResponse {
 
         private final HttpHeaders headers = new HttpHeaders();
 
@@ -140,13 +140,13 @@ public class MockPolicy {
         }
 
         @Override
-        public ClientResponse bodyHandler(Handler<Buffer> bodyHandler) {
+        public ProxyResponse bodyHandler(Handler<Buffer> bodyHandler) {
             this.bodyHandler = bodyHandler;
             return this;
         }
 
         @Override
-        public ClientResponse endHandler(Handler<Void> endHandler) {
+        public ProxyResponse endHandler(Handler<Void> endHandler) {
             this.endHandler = endHandler;
             return this;
         }
