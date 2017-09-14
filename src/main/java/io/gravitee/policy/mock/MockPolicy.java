@@ -16,6 +16,7 @@
 package io.gravitee.policy.mock;
 
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Invoker;
 import io.gravitee.gateway.api.Request;
@@ -24,6 +25,7 @@ import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
+import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
@@ -56,27 +58,31 @@ public class MockPolicy {
     class MockInvoker implements Invoker {
 
         @Override
-        public ProxyConnection invoke(ExecutionContext executionContext, Request serverRequest, Handler<ProxyResponse> result) {
-            final ProxyConnection proxyConnection = new MockProxyConnection(executionContext, new MockClientResponse(), result);
+        public Request invoke(ExecutionContext executionContext, Request serverRequest, ReadStream<Buffer> stream, Handler<ProxyConnection> connectionHandler) {
+            final ProxyConnection proxyConnection = new MockProxyConnection(executionContext);
 
-            serverRequest
+            // Return connection to backend
+            connectionHandler.handle(proxyConnection);
+
+            // Plug underlying stream to connection stream
+            stream
                     .bodyHandler(proxyConnection::write)
-                    .endHandler(endResult -> proxyConnection.end());
+                    .endHandler(aVoid -> proxyConnection.end());
 
-            return proxyConnection;
+            // Resume the incoming request to handle content and end
+            serverRequest.resume();
+
+            return serverRequest;
         }
     }
 
     class MockProxyConnection implements ProxyConnection {
 
-        private final ExecutionContext executionContext;
         private final MockClientResponse clientResponse;
-        private final Handler<ProxyResponse> proxyResponseHandler;
+        private Handler<ProxyResponse> proxyResponseHandler;
 
-        MockProxyConnection(final ExecutionContext executionContext, final MockClientResponse clientResponse, final Handler<ProxyResponse> proxyResponseHandler) {
-            this.executionContext = executionContext;
-            this.clientResponse = clientResponse;
-            this.proxyResponseHandler = proxyResponseHandler;
+        MockProxyConnection(final ExecutionContext executionContext) {
+            this.clientResponse = new MockClientResponse(executionContext);
         }
 
         @Override
@@ -86,37 +92,28 @@ public class MockPolicy {
 
         @Override
         public void end() {
-            String content = mockPolicyConfiguration.getContent();
-            boolean hasContent = (content != null && content.length() > 0);
-
-            Buffer buffer = null;
-            if (hasContent) {
-                buffer = Buffer.buffer(executionContext.getTemplateEngine().convert(content));
-                clientResponse.headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
-                // Trying to discover content type
-                if (! clientResponse.headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
-                    clientResponse.headers.set(HttpHeaders.CONTENT_TYPE, getContentType(content));
-                }
-            }
-
             proxyResponseHandler.handle(clientResponse);
+        }
 
-            if (hasContent && buffer != null) {
-                clientResponse.bodyHandler.handle(buffer);
-            }
-
-            clientResponse.endHandler.handle(null);
+        @Override
+        public ProxyConnection responseHandler(Handler<ProxyResponse> responseHandler) {
+            this.proxyResponseHandler = responseHandler;
+            return this;
         }
     }
 
     class MockClientResponse implements ProxyResponse {
 
         private final HttpHeaders headers = new HttpHeaders();
+        private final ExecutionContext executionContext;
 
         private Handler<Buffer> bodyHandler;
         private Handler<Void> endHandler;
 
-        MockClientResponse() {
+        private Buffer buffer;
+
+        MockClientResponse(final ExecutionContext executionContext) {
+            this.executionContext = executionContext;
             this.init();
         }
 
@@ -126,6 +123,18 @@ public class MockPolicy {
                         .stream()
                         .filter(header -> header.getName() != null && !header.getName().trim().isEmpty())
                         .forEach(header -> headers.add(header.getName(), header.getValue()));
+            }
+
+            String content = mockPolicyConfiguration.getContent();
+            boolean hasContent = (content != null && content.length() > 0);
+
+            if (hasContent) {
+                buffer = Buffer.buffer(executionContext.getTemplateEngine().convert(content));
+                headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
+                // Trying to discover content type
+                if (! headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
+                    headers.set(HttpHeaders.CONTENT_TYPE, getContentType(content));
+                }
             }
         }
 
@@ -150,15 +159,25 @@ public class MockPolicy {
             this.endHandler = endHandler;
             return this;
         }
+
+        @Override
+        public ReadStream<Buffer> resume() {
+            if (buffer != null) {
+                bodyHandler.handle(buffer);
+            }
+
+            endHandler.handle(null);
+            return this;
+        }
     }
 
     private static String getContentType(String content) {
         if (StringUtils.isJSON(content)) {
-            return "application/json";
+            return MediaType.APPLICATION_JSON;
         } else if (StringUtils.isXML(content)) {
-            return "text/xml";
+            return MediaType.TEXT_XML;
         } else {
-            return "text/plain";
+            return MediaType.TEXT_PLAIN;
         }
     }
 }
