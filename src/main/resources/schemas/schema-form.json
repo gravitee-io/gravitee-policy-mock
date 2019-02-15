@@ -4,6 +4,7 @@
   "properties" : {
     "status" : {
       "title": "HTTP Status Code",
+      "description": "HTTP Status Code send to the consumer",
       "type" : "string",
       "enum": [
         "100",
@@ -119,10 +120,12 @@
         "properties" : {
           "name" : {
             "title": "Name",
+            "description": "Name of the header",
             "type" : "string"
           },
           "value" : {
             "title": "Value",
+            "description": "Value of the header",
             "type" : "string"
           }
         }
@@ -133,11 +136,19 @@
       ]
     },
     "content" : {
-      "title": "Body",
+      "title": "Response body",
+      "description": "The payload of the mocked response (supports EL).",
       "type" : "string",
       "x-schema-form": {
-        "type": "textarea",
-        "placeholder": "Place your body content here"
+        "type": "codemirror",
+        "codemirrorOptions": {
+          "placeholder": "Put the body content here",
+          "lineWrapping": true,
+          "lineNumbers": true,
+          "allowDropFileTypes": true,
+          "autoCloseTags": true,
+          "mode": "text"
+        }
       }
     }
   },"required": [

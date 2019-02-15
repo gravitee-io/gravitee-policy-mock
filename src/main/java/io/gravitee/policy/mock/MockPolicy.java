@@ -29,6 +29,7 @@ import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
+import io.gravitee.policy.mock.el.EvaluableRequest;
 import io.gravitee.policy.mock.utils.StringUtils;
 
 /**
@@ -36,6 +37,8 @@ import io.gravitee.policy.mock.utils.StringUtils;
  * @author GraviteeSource Team
  */
 public class MockPolicy {
+
+    private final static String REQUEST_VARIABLE = "request";
 
     /**
      * Mock policy configuration
@@ -59,7 +62,7 @@ public class MockPolicy {
 
         @Override
         public Request invoke(ExecutionContext executionContext, Request serverRequest, ReadStream<Buffer> stream, Handler<ProxyConnection> connectionHandler) {
-            final ProxyConnection proxyConnection = new MockProxyConnection(executionContext);
+            final ProxyConnection proxyConnection = new MockProxyConnection(serverRequest, executionContext);
 
             // Return connection to backend
             connectionHandler.handle(proxyConnection);
@@ -78,21 +81,30 @@ public class MockPolicy {
 
     class MockProxyConnection implements ProxyConnection {
 
-        private final MockClientResponse clientResponse;
         private Handler<ProxyResponse> proxyResponseHandler;
+        private final Request serverRequest;
+        private final ExecutionContext executionContext;
+        private Buffer content;
 
-        MockProxyConnection(final ExecutionContext executionContext) {
-            this.clientResponse = new MockClientResponse(executionContext);
+        MockProxyConnection(final Request serverRequest, final ExecutionContext executionContext) {
+            this.serverRequest = serverRequest;
+            this.executionContext = executionContext;
         }
 
         @Override
         public ProxyConnection write(Buffer chunk) {
+            if (content == null) {
+                content = Buffer.buffer();
+            }
+            content.appendBuffer(chunk);
             return this;
         }
 
         @Override
         public void end() {
-            proxyResponseHandler.handle(clientResponse);
+            proxyResponseHandler.handle(
+                    new MockClientResponse(executionContext,
+                            new EvaluableRequest(serverRequest, (content != null) ? content.toString() : null)));
         }
 
         @Override
@@ -105,19 +117,17 @@ public class MockPolicy {
     class MockClientResponse implements ProxyResponse {
 
         private final HttpHeaders headers = new HttpHeaders();
-        private final ExecutionContext executionContext;
 
         private Handler<Buffer> bodyHandler;
         private Handler<Void> endHandler;
 
         private Buffer buffer;
 
-        MockClientResponse(final ExecutionContext executionContext) {
-            this.executionContext = executionContext;
-            this.init();
+        MockClientResponse(final ExecutionContext executionContext, final EvaluableRequest request) {
+            this.init(executionContext, request);
         }
 
-        private void init() {
+        private void init(ExecutionContext executionContext, EvaluableRequest request) {
             if (mockPolicyConfiguration.getHeaders() != null) {
                 mockPolicyConfiguration.getHeaders()
                         .stream()
@@ -129,6 +139,9 @@ public class MockPolicy {
             boolean hasContent = (content != null && content.length() > 0);
 
             if (hasContent) {
+                executionContext.getTemplateEngine().getTemplateContext()
+                        .setVariable(REQUEST_VARIABLE, request);
+
                 buffer = Buffer.buffer(executionContext.getTemplateEngine().convert(content));
                 headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
                 // Trying to discover content type
