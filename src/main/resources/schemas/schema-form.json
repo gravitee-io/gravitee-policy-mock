@@ -125,7 +125,7 @@
           },
           "value" : {
             "title": "Value",
-            "description": "Value of the header",
+            "description": "Value of the header (support EL)",
             "type" : "string"
           }
         }
@@ -137,7 +137,7 @@
     },
     "content" : {
       "title": "Response body",
-      "description": "The payload of the mocked response (supports EL).",
+      "description": "The payload of the mocked response (support EL)",
       "type" : "string",
       "x-schema-form": {
         "type": "codemirror",

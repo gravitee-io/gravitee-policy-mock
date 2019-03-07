@@ -28,9 +28,12 @@ import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
+import io.gravitee.policy.mock.configuration.HttpHeader;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
 import io.gravitee.policy.mock.el.EvaluableRequest;
 import io.gravitee.policy.mock.utils.StringUtils;
+
+import java.util.function.Consumer;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -132,7 +135,21 @@ public class MockPolicy {
                 mockPolicyConfiguration.getHeaders()
                         .stream()
                         .filter(header -> header.getName() != null && !header.getName().trim().isEmpty())
-                        .forEach(header -> headers.add(header.getName(), header.getValue()));
+                        .forEach(new Consumer<HttpHeader>() {
+                            @Override
+                            public void accept(HttpHeader header) {
+                                try {
+                                    String extValue = (header.getValue() != null) ?
+                                            executionContext.getTemplateEngine().getValue(header.getValue(), String.class) : null;
+                                    if (extValue != null) {
+                                        headers.set(header.getName(), extValue);
+                                    }
+                                } catch (Exception ex) {
+                                    // Do nothing
+                                    ex.printStackTrace();
+                                }
+                            }
+                        });
             }
 
             String content = mockPolicyConfiguration.getContent();
