@@ -64,8 +64,8 @@ public class MockPolicy {
     class MockInvoker implements Invoker {
 
         @Override
-        public Request invoke(ExecutionContext executionContext, Request serverRequest, ReadStream<Buffer> stream, Handler<ProxyConnection> connectionHandler) {
-            final ProxyConnection proxyConnection = new MockProxyConnection(serverRequest, executionContext);
+        public void invoke(ExecutionContext context, ReadStream<Buffer> stream, Handler<ProxyConnection> connectionHandler) {
+            final ProxyConnection proxyConnection = new MockProxyConnection(context);
 
             // Return connection to backend
             connectionHandler.handle(proxyConnection);
@@ -76,21 +76,17 @@ public class MockPolicy {
                     .endHandler(aVoid -> proxyConnection.end());
 
             // Resume the incoming request to handle content and end
-            serverRequest.resume();
-
-            return serverRequest;
+            context.request().resume();
         }
     }
 
     class MockProxyConnection implements ProxyConnection {
 
         private Handler<ProxyResponse> proxyResponseHandler;
-        private final Request serverRequest;
         private final ExecutionContext executionContext;
         private Buffer content;
 
-        MockProxyConnection(final Request serverRequest, final ExecutionContext executionContext) {
-            this.serverRequest = serverRequest;
+        MockProxyConnection(final ExecutionContext executionContext) {
             this.executionContext = executionContext;
         }
 
@@ -107,7 +103,7 @@ public class MockPolicy {
         public void end() {
             proxyResponseHandler.handle(
                     new MockClientResponse(executionContext,
-                            new EvaluableRequest(serverRequest, (content != null) ? content.toString() : null)));
+                            new EvaluableRequest(executionContext.request(), (content != null) ? content.toString() : null)));
         }
 
         @Override
