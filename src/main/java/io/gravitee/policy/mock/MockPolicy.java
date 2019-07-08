@@ -16,7 +16,9 @@
 package io.gravitee.policy.mock;
 
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.el.exceptions.ELNullEvaluationException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Invoker;
 import io.gravitee.gateway.api.Request;
@@ -119,6 +121,7 @@ public class MockPolicy {
 
         private Handler<Buffer> bodyHandler;
         private Handler<Void> endHandler;
+        private int status;
 
         private Buffer buffer;
 
@@ -127,6 +130,7 @@ public class MockPolicy {
         }
 
         private void init(ExecutionContext executionContext, EvaluableRequest request) {
+            status = mockPolicyConfiguration.getStatus();
             if (mockPolicyConfiguration.getHeaders() != null) {
                 mockPolicyConfiguration.getHeaders()
                         .stream()
@@ -155,7 +159,13 @@ public class MockPolicy {
                 executionContext.getTemplateEngine().getTemplateContext()
                         .setVariable(REQUEST_VARIABLE, request);
 
-                buffer = Buffer.buffer(executionContext.getTemplateEngine().convert(content));
+                String evaluatedContent = executionContext.getTemplateEngine().getValue(content, String.class);
+                if (evaluatedContent == null) {
+                    status = HttpStatusCode.INTERNAL_SERVER_ERROR_500;
+                    evaluatedContent = new ELNullEvaluationException(content).getMessage();
+                }
+
+                buffer = Buffer.buffer(evaluatedContent);
                 headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
                 // Trying to discover content type
                 if (! headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
@@ -166,7 +176,7 @@ public class MockPolicy {
 
         @Override
         public int status() {
-            return mockPolicyConfiguration.getStatus();
+            return status;
         }
 
         @Override
