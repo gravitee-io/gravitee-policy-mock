@@ -18,6 +18,7 @@ package io.gravitee.policy.mock;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.gravitee.el.exceptions.ELNullEvaluationException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Invoker;
@@ -159,10 +160,18 @@ public class MockPolicy {
                 executionContext.getTemplateEngine().getTemplateContext()
                         .setVariable(REQUEST_VARIABLE, request);
 
-                String evaluatedContent = executionContext.getTemplateEngine().getValue(content, String.class);
-                if (evaluatedContent == null) {
+                String evaluatedContent = null;
+
+                try {
+                    evaluatedContent = executionContext.getTemplateEngine().getValue(content, String.class);
+
+                    if (evaluatedContent == null) {
+                        status = HttpStatusCode.INTERNAL_SERVER_ERROR_500;
+                        evaluatedContent = new ELNullEvaluationException(content).getMessage();
+                    }
+                }catch (Exception e) {
                     status = HttpStatusCode.INTERNAL_SERVER_ERROR_500;
-                    evaluatedContent = new ELNullEvaluationException(content).getMessage();
+                    evaluatedContent = new ExpressionEvaluationException(content).getMessage();
                 }
 
                 buffer = Buffer.buffer(evaluatedContent);
