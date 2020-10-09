@@ -71,22 +71,25 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         configuration.setHeaders(Collections.singletonList(new HttpHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)));
 
         if (responseEntry.getValue().getContent() != null) {
-            final io.swagger.v3.oas.models.media.MediaType mediaType =
-                    responseEntry.getValue().getContent().entrySet().iterator().next().getValue();
-            if (mediaType.getExample() != null) {
-                configuration.setResponse(mapper.convertValue(mediaType.getExample(), Map.class));
-            } else if (mediaType.getExamples() != null) {
-                final Map.Entry<String, Example> next = mediaType.getExamples().entrySet().iterator().next();
-                configuration.setResponse(singletonMap(next.getKey(), next.getValue().getValue()));
-            } else {
-                final Schema responseSchema = mediaType.getSchema();
-                if (responseSchema != null) {
-                    if (responseSchema instanceof ArraySchema) {
-                        final ArraySchema arraySchema = (ArraySchema) responseSchema;
-                        processResponseSchema(oai, configuration, "array", arraySchema.getItems());
-                    } else {
-                        processResponseSchema(oai, configuration, responseSchema.getType() == null ? "object" :
-                                responseSchema.getType(), responseSchema);
+            final Iterator<Map.Entry<String, io.swagger.v3.oas.models.media.MediaType>> iterator = responseEntry.getValue().getContent().entrySet().iterator();
+            if (iterator.hasNext()) {
+                final io.swagger.v3.oas.models.media.MediaType mediaType = iterator.next().getValue();
+
+                if (mediaType.getExample() != null) {
+                    configuration.setResponse(mapper.convertValue(mediaType.getExample(), Map.class));
+                } else if (mediaType.getExamples() != null) {
+                    final Map.Entry<String, Example> next = mediaType.getExamples().entrySet().iterator().next();
+                    configuration.setResponse(singletonMap(next.getKey(), next.getValue().getValue()));
+                } else {
+                    final Schema responseSchema = mediaType.getSchema();
+                    if (responseSchema != null) {
+                        if (responseSchema instanceof ArraySchema) {
+                            final ArraySchema arraySchema = (ArraySchema) responseSchema;
+                            processResponseSchema(oai, configuration, "array", arraySchema.getItems());
+                        } else {
+                            processResponseSchema(oai, configuration, responseSchema.getType() == null ? "object" :
+                                    responseSchema.getType(), responseSchema);
+                        }
                     }
                 }
             }
@@ -112,7 +115,7 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (responseSchema.getProperties() == null) {
             configuration.setArray("array".equals(type));
             if (responseSchema.getAdditionalProperties() != null) {
-                configuration.setResponse(Collections.singletonMap("additionalProperty", ((ObjectSchema) responseSchema.getAdditionalProperties()).getType()));
+                configuration.setResponse(Collections.singletonMap("additionalProperty", ((Schema) responseSchema.getAdditionalProperties()).getType()));
             } else if (responseSchema.get$ref() != null) {
                 if (!"array".equals(type)) {
                     configuration.setArray(isRefArray(oai, responseSchema.get$ref()));
