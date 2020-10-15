@@ -25,6 +25,7 @@ import io.gravitee.gateway.api.Invoker;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
@@ -33,7 +34,6 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.mock.configuration.HttpHeader;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
-import io.gravitee.policy.mock.el.EvaluableRequest;
 import io.gravitee.policy.mock.utils.StringUtils;
 
 import java.util.function.Consumer;
