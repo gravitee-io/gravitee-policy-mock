@@ -124,7 +124,10 @@
           "value" : {
             "title": "Value",
             "description": "Value of the header (support EL)",
-            "type" : "string"
+            "type" : "string",
+            "x-schema-form": {
+              "expression-language": true
+            }
           }
         }
       },
@@ -146,7 +149,8 @@
           "allowDropFileTypes": true,
           "autoCloseTags": true,
           "mode": "text"
-        }
+        },
+        "expression-language": true
       }
     }
   },"required": [
