@@ -31,10 +31,10 @@ import io.swagger.models.properties.ObjectProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
 
+import java.io.IOException;
 import java.util.*;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -43,7 +43,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
 
-    private final ObjectMapper mapper  = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     {
         mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
@@ -68,6 +68,7 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
         configuration.setHeaders(Collections.singletonList(new HttpHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)));
 
         final Model responseSchema = responseEntry.getValue().getResponseSchema();
+
         if (responseSchema != null) {
             if (responseSchema instanceof ArrayModel) {
                 final ArrayModel arrayModel = (ArrayModel) responseSchema;
@@ -83,10 +84,24 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
                 configuration.setResponse(getResponseFromSimpleRef(swagger, simpleRef));
             } else if (responseSchema instanceof ModelImpl) {
                 final ModelImpl model = (ModelImpl) responseSchema;
-                configuration.setArray("array".equals(model.getType()));
-                if ("object".equals(model.getType())) {
-                    if (model.getAdditionalProperties() != null) {
+                if ("array".equals(model.getType())) {
+                    configuration.setArray(true);
+                } else if ("object".equals(model.getType())) {
+                    if (model.getProperties() != null) {
+                        configuration.setResponse(getResponseProperties(swagger, model.getProperties()));
+                    } else if (model.getAdditionalProperties() != null) {
                         configuration.setResponse(Collections.singletonMap("additionalProperty", model.getAdditionalProperties().getType()));
+                    }
+                }
+            }
+        } else {
+            Map<String, Object> examples = responseEntry.getValue().getExamples();
+            if (examples != null) {
+                Object jsonExample = examples.get(MediaType.APPLICATION_JSON);
+                if (jsonExample != null) {
+                    try {
+                        configuration.setResponse(mapper.readValue(jsonExample.toString(), Map.class));
+                    } catch (IOException e) {
                     }
                 }
             }
@@ -97,7 +112,7 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
             policy.setName("mock");
             if (configuration.getResponse() != null) {
                 configuration.setContent(mapper.writeValueAsString(configuration.isArray() ?
-                        singletonList(configuration.getResponse()) : configuration.getResponse()));
+                    singletonList(configuration.getResponse()) : configuration.getResponse()));
             }
             policy.setConfiguration(mapper.writeValueAsString(configuration));
             return Optional.of(policy);
@@ -109,7 +124,22 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
     }
 
     private Map<String, Object> getResponseFromSimpleRef(Swagger swagger, String simpleRef) {
-        final Map<String, Property> properties = swagger.getDefinitions().get(simpleRef).getProperties();
+        Model model = swagger.getDefinitions().get(simpleRef);
+        final Map<String, Property> properties;
+        // allOf case
+        if (model instanceof ComposedModel) {
+            return  ((ComposedModel) model).getAllOf().stream().map((model1 -> {
+                if (model1 instanceof RefModel) {
+                    return getResponseFromSimpleRef(swagger, ((RefModel) model1).getSimpleRef());
+                } else {
+                    return getResponseProperties(swagger, model1.getProperties());
+                }
+            }))
+                .flatMap(m -> m.entrySet().stream())
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        } else {
+            properties = model.getProperties();
+        }
         if (properties == null) {
             return emptyMap();
         }
@@ -118,14 +148,35 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
 
     private Map<String, Object> getResponseProperties(Swagger swagger, Map<String, Property> properties) {
         return properties.entrySet()
-                .stream()
-                .collect(toMap(Map.Entry::getKey, e -> {
-                    final Property property = e.getValue();
-                    if (property instanceof RefProperty) {
-                        return this.getResponseFromSimpleRef(swagger, ((RefProperty) property).getSimpleRef());
-                    }
-                    return property.getType();
-                }));
+            .stream()
+            .collect(toMap(Map.Entry::getKey, e -> {
+                final Property property = e.getValue();
+                if (property instanceof RefProperty) {
+                    return this.getResponseFromSimpleRef(swagger, ((RefProperty) property).getSimpleRef());
+                }
+                return this.getResponsePropertiesFromType(property.getType());
+            }));
+    }
+
+    private Object getResponsePropertiesFromType(final String responseType) {
+        if (responseType == null) {
+            return null;
+        }
+        final Random random = new Random();
+        switch (responseType) {
+            case "string":
+                return "Mocked string";
+            case "boolean":
+                return random.nextBoolean();
+            case "integer":
+                return random.nextInt(1000);
+            case "number":
+                return random.nextDouble();
+            case "array":
+                return singletonList(getResponsePropertiesFromType("string"));
+            default:
+                return emptyMap();
+        }
     }
 
     private class Configuration {
