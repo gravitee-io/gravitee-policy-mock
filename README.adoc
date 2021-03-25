@@ -27,6 +27,10 @@ the gateway and a remote service or backend.
 
 When defining the response body content, you can use Expression Language to provide a dynamic mock response.
 
+=== Policy identifier
+
+You can enable or disable the policy with policy identifier `mock`.
+
 == Examples
 
 Note that you don't need to provide the `Content-Type` header, since the Mock policy can automatically detect the
