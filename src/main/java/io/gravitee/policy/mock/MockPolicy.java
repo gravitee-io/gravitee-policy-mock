@@ -15,7 +15,6 @@
  */
 package io.gravitee.policy.mock;
 
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.el.exceptions.ExpressionEvaluationException;
@@ -27,6 +26,8 @@ import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http.HttpHeaderNames;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.ReadStream;
@@ -118,7 +119,7 @@ public class MockPolicy {
 
     class MockClientResponse implements ProxyResponse {
 
-        private final HttpHeaders headers = new HttpHeaders();
+        private final HttpHeaders headers = HttpHeaders.create();
 
         private Handler<Buffer> bodyHandler;
         private Handler<Void> endHandler;
@@ -175,10 +176,10 @@ public class MockPolicy {
                 }
 
                 buffer = Buffer.buffer(evaluatedContent);
-                headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
+                headers.set(HttpHeaderNames.CONTENT_LENGTH, Integer.toString(buffer.length()));
                 // Trying to discover content type
-                if (! headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
-                    headers.set(HttpHeaders.CONTENT_TYPE, getContentType(content));
+                if (! headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
+                    headers.set(HttpHeaderNames.CONTENT_TYPE, getContentType(content));
                 }
             }
         }
