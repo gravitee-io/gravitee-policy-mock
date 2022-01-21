@@ -84,30 +84,27 @@ public class HTTP {
      * @throws JSONException
      */
     public static JSONObject toJSONObject(String string) throws JSONException {
-        JSONObject     jo = new JSONObject();
-        HTTPTokener    x = new HTTPTokener(string);
-        String         token;
+        JSONObject jo = new JSONObject();
+        HTTPTokener x = new HTTPTokener(string);
+        String token;
 
         token = x.nextToken();
         if (token.toUpperCase().startsWith("HTTP")) {
-
-// Response
+            // Response
 
             jo.put("HTTP-Version", token);
             jo.put("Status-Code", x.nextToken());
             jo.put("Reason-Phrase", x.nextTo('\0'));
             x.next();
-
         } else {
-
-// Request
+            // Request
 
             jo.put("Method", token);
             jo.put("Request-URI", x.nextToken());
             jo.put("HTTP-Version", x.nextToken());
         }
 
-// Fields
+        // Fields
 
         while (x.more()) {
             String name = x.nextTo(':');
@@ -117,7 +114,6 @@ public class HTTP {
         }
         return jo;
     }
-
 
     /**
      * Convert a JSONObject into an HTTP header. A request header must contain
@@ -140,9 +136,9 @@ public class HTTP {
      *  information.
      */
     public static String toString(JSONObject jo) throws JSONException {
-        Iterator<String>    keys = jo.keys();
-        String              string;
-        StringBuilder       sb = new StringBuilder();
+        Iterator<String> keys = jo.keys();
+        String string;
+        StringBuilder sb = new StringBuilder();
         if (jo.has("Status-Code") && jo.has("Reason-Phrase")) {
             sb.append(jo.getString("HTTP-Version"));
             sb.append(' ');
@@ -163,9 +159,14 @@ public class HTTP {
         sb.append(CRLF);
         while (keys.hasNext()) {
             string = keys.next();
-            if (!"HTTP-Version".equals(string)      && !"Status-Code".equals(string) &&
-                    !"Reason-Phrase".equals(string) && !"Method".equals(string) &&
-                    !"Request-URI".equals(string)   && !jo.isNull(string)) {
+            if (
+                !"HTTP-Version".equals(string) &&
+                !"Status-Code".equals(string) &&
+                !"Reason-Phrase".equals(string) &&
+                !"Method".equals(string) &&
+                !"Request-URI".equals(string) &&
+                !jo.isNull(string)
+            ) {
                 sb.append(string);
                 sb.append(": ");
                 sb.append(jo.getString(string));

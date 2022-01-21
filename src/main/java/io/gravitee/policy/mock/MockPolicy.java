@@ -17,8 +17,8 @@ package io.gravitee.policy.mock;
 
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.gravitee.el.exceptions.ELNullEvaluationException;
+import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Invoker;
 import io.gravitee.gateway.api.Request;
@@ -36,7 +36,6 @@ import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.mock.configuration.HttpHeader;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
 import io.gravitee.policy.mock.utils.StringUtils;
-
 import java.util.function.Consumer;
 
 /**
@@ -45,7 +44,7 @@ import java.util.function.Consumer;
  */
 public class MockPolicy {
 
-    private final static String REQUEST_VARIABLE = "request";
+    private static final String REQUEST_VARIABLE = "request";
 
     /**
      * Mock policy configuration
@@ -75,9 +74,7 @@ public class MockPolicy {
             connectionHandler.handle(proxyConnection);
 
             // Plug underlying stream to connection stream
-            stream
-                    .bodyHandler(proxyConnection::write)
-                    .endHandler(aVoid -> proxyConnection.end());
+            stream.bodyHandler(proxyConnection::write).endHandler(aVoid -> proxyConnection.end());
 
             // Resume the incoming request to handle content and end
             context.request().resume();
@@ -106,8 +103,11 @@ public class MockPolicy {
         @Override
         public void end() {
             proxyResponseHandler.handle(
-                    new MockClientResponse(executionContext,
-                            new EvaluableRequest(executionContext.request(), (content != null) ? content.toString() : null)));
+                new MockClientResponse(
+                    executionContext,
+                    new EvaluableRequest(executionContext.request(), (content != null) ? content.toString() : null)
+                )
+            );
         }
 
         @Override
@@ -134,15 +134,18 @@ public class MockPolicy {
         private void init(ExecutionContext executionContext, EvaluableRequest request) {
             status = mockPolicyConfiguration.getStatus();
             if (mockPolicyConfiguration.getHeaders() != null) {
-                mockPolicyConfiguration.getHeaders()
-                        .stream()
-                        .filter(header -> header.getName() != null && !header.getName().trim().isEmpty())
-                        .forEach(new Consumer<HttpHeader>() {
+                mockPolicyConfiguration
+                    .getHeaders()
+                    .stream()
+                    .filter(header -> header.getName() != null && !header.getName().trim().isEmpty())
+                    .forEach(
+                        new Consumer<HttpHeader>() {
                             @Override
                             public void accept(HttpHeader header) {
                                 try {
-                                    String extValue = (header.getValue() != null) ?
-                                            executionContext.getTemplateEngine().getValue(header.getValue(), String.class) : null;
+                                    String extValue = (header.getValue() != null)
+                                        ? executionContext.getTemplateEngine().getValue(header.getValue(), String.class)
+                                        : null;
                                     if (extValue != null) {
                                         headers.set(header.getName(), extValue);
                                     }
@@ -151,15 +154,15 @@ public class MockPolicy {
                                     ex.printStackTrace();
                                 }
                             }
-                        });
+                        }
+                    );
             }
 
             String content = mockPolicyConfiguration.getContent();
             boolean hasContent = (content != null && content.length() > 0);
 
             if (hasContent) {
-                executionContext.getTemplateEngine().getTemplateContext()
-                        .setVariable(REQUEST_VARIABLE, request);
+                executionContext.getTemplateEngine().getTemplateContext().setVariable(REQUEST_VARIABLE, request);
 
                 String evaluatedContent = null;
 
@@ -170,7 +173,7 @@ public class MockPolicy {
                         status = HttpStatusCode.INTERNAL_SERVER_ERROR_500;
                         evaluatedContent = new ELNullEvaluationException(content).getMessage();
                     }
-                }catch (Exception e) {
+                } catch (Exception e) {
                     status = HttpStatusCode.INTERNAL_SERVER_ERROR_500;
                     evaluatedContent = new ExpressionEvaluationException(content).getMessage();
                 }
@@ -178,7 +181,7 @@ public class MockPolicy {
                 buffer = Buffer.buffer(evaluatedContent);
                 headers.set(HttpHeaderNames.CONTENT_LENGTH, Integer.toString(buffer.length()));
                 // Trying to discover content type
-                if (! headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
+                if (!headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
                     headers.set(HttpHeaderNames.CONTENT_TYPE, getContentType(content));
                 }
             }

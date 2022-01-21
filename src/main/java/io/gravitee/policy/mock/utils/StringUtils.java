@@ -18,10 +18,9 @@ package io.gravitee.policy.mock.utils;
 import io.gravitee.policy.mock.json.JSONArray;
 import io.gravitee.policy.mock.json.JSONException;
 import io.gravitee.policy.mock.json.JSONObject;
-import org.w3c.dom.Document;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)

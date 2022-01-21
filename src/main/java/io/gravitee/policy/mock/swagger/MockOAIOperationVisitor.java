@@ -15,6 +15,9 @@
  */
 package io.gravitee.policy.mock.swagger;
 
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.toMap;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,11 +37,7 @@ import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
-
 import java.util.*;
-
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,7 +45,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class MockOAIOperationVisitor implements OAIOperationVisitor {
 
-    private final ObjectMapper mapper  = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     {
         mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
@@ -71,7 +70,11 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         configuration.setHeaders(Collections.singletonList(new HttpHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)));
 
         if (responseEntry.getValue().getContent() != null) {
-            final Iterator<Map.Entry<String, io.swagger.v3.oas.models.media.MediaType>> iterator = responseEntry.getValue().getContent().entrySet().iterator();
+            final Iterator<Map.Entry<String, io.swagger.v3.oas.models.media.MediaType>> iterator = responseEntry
+                .getValue()
+                .getContent()
+                .entrySet()
+                .iterator();
             if (iterator.hasNext()) {
                 final io.swagger.v3.oas.models.media.MediaType mediaType = iterator.next().getValue();
 
@@ -87,8 +90,12 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
                             final ArraySchema arraySchema = (ArraySchema) responseSchema;
                             processResponseSchema(oai, configuration, "array", arraySchema.getItems());
                         } else {
-                            processResponseSchema(oai, configuration, responseSchema.getType() == null ? "object" :
-                                    responseSchema.getType(), responseSchema);
+                            processResponseSchema(
+                                oai,
+                                configuration,
+                                responseSchema.getType() == null ? "object" : responseSchema.getType(),
+                                responseSchema
+                            );
                         }
                     }
                 }
@@ -99,8 +106,11 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
             Policy policy = new Policy();
             policy.setName("mock");
             if (configuration.getResponse() != null) {
-                configuration.setContent(mapper.writeValueAsString(configuration.isArray() ?
-                        singletonList(configuration.getResponse()) : configuration.getResponse()));
+                configuration.setContent(
+                    mapper.writeValueAsString(
+                        configuration.isArray() ? singletonList(configuration.getResponse()) : configuration.getResponse()
+                    )
+                );
             }
             policy.setConfiguration(mapper.writeValueAsString(configuration));
             return Optional.of(policy);
@@ -115,7 +125,9 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (responseSchema.getProperties() == null) {
             configuration.setArray("array".equals(type));
             if (responseSchema.getAdditionalProperties() != null) {
-                configuration.setResponse(Collections.singletonMap("additionalProperty", ((Schema) responseSchema.getAdditionalProperties()).getType()));
+                configuration.setResponse(
+                    Collections.singletonMap("additionalProperty", ((Schema) responseSchema.getAdditionalProperties()).getType())
+                );
             } else if (responseSchema.get$ref() != null) {
                 if (!"array".equals(type)) {
                     configuration.setArray(isRefArray(oai, responseSchema.get$ref()));
@@ -157,7 +169,7 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
     }
 
     private Object getResponseFromSimpleRef(OpenAPI oai, String ref) {
-        if (ref == null){
+        if (ref == null) {
             return null;
         }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
@@ -169,12 +181,7 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (properties == null) {
             return null;
         }
-        return properties.entrySet()
-                .stream()
-                .collect(
-                        toMap(
-                                Map.Entry::getKey,
-                                e -> this.getSchemaValue(oai, e.getValue())));
+        return properties.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> this.getSchemaValue(oai, e.getValue())));
     }
 
     private Object getSchemaValue(final OpenAPI oai, Schema schema) {
@@ -216,17 +223,18 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
 
         if (schema instanceof ComposedSchema) {
             final Map<String, Object> response = new HashMap<>();
-            ((ComposedSchema) schema).getAllOf().forEach(composedSchema -> {
-                if (composedSchema.get$ref() != null) {
-                    Object responseFromSimpleRef = getResponseFromSimpleRef(oai, composedSchema.get$ref());
-                    if (responseFromSimpleRef instanceof Map) {
-                        response.putAll((Map) responseFromSimpleRef);
+            ((ComposedSchema) schema).getAllOf()
+                .forEach(composedSchema -> {
+                    if (composedSchema.get$ref() != null) {
+                        Object responseFromSimpleRef = getResponseFromSimpleRef(oai, composedSchema.get$ref());
+                        if (responseFromSimpleRef instanceof Map) {
+                            response.putAll((Map) responseFromSimpleRef);
+                        }
                     }
-                }
-                if (composedSchema.getProperties() != null) {
-                    response.putAll(getResponseProperties(oai, composedSchema.getProperties()));
-                }
-            });
+                    if (composedSchema.getProperties() != null) {
+                        response.putAll(getResponseProperties(oai, composedSchema.getProperties()));
+                    }
+                });
             return response;
         }
 
