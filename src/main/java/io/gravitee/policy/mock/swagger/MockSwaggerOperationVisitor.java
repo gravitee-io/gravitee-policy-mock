@@ -15,6 +15,9 @@
  */
 package io.gravitee.policy.mock.swagger;
 
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.toMap;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,12 +33,8 @@ import io.swagger.models.*;
 import io.swagger.models.properties.ObjectProperty;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
-
 import java.io.IOException;
 import java.util.*;
-
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -90,7 +89,9 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
                     if (model.getProperties() != null) {
                         configuration.setResponse(getResponseProperties(swagger, model.getProperties()));
                     } else if (model.getAdditionalProperties() != null) {
-                        configuration.setResponse(Collections.singletonMap("additionalProperty", model.getAdditionalProperties().getType()));
+                        configuration.setResponse(
+                            Collections.singletonMap("additionalProperty", model.getAdditionalProperties().getType())
+                        );
                     }
                 }
             }
@@ -101,8 +102,7 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
                 if (jsonExample != null) {
                     try {
                         configuration.setResponse(mapper.readValue(jsonExample.toString(), Map.class));
-                    } catch (IOException e) {
-                    }
+                    } catch (IOException e) {}
                 }
             }
         }
@@ -111,8 +111,11 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
             Policy policy = new Policy();
             policy.setName("mock");
             if (configuration.getResponse() != null) {
-                configuration.setContent(mapper.writeValueAsString(configuration.isArray() ?
-                    singletonList(configuration.getResponse()) : configuration.getResponse()));
+                configuration.setContent(
+                    mapper.writeValueAsString(
+                        configuration.isArray() ? singletonList(configuration.getResponse()) : configuration.getResponse()
+                    )
+                );
             }
             policy.setConfiguration(mapper.writeValueAsString(configuration));
             return Optional.of(policy);
@@ -128,13 +131,19 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
         final Map<String, Property> properties;
         // allOf case
         if (model instanceof ComposedModel) {
-            return  ((ComposedModel) model).getAllOf().stream().map((model1 -> {
-                if (model1 instanceof RefModel) {
-                    return getResponseFromSimpleRef(swagger, ((RefModel) model1).getSimpleRef());
-                } else {
-                    return getResponseProperties(swagger, model1.getProperties());
-                }
-            }))
+            return ((ComposedModel) model).getAllOf()
+                .stream()
+                .map(
+                    (
+                        model1 -> {
+                            if (model1 instanceof RefModel) {
+                                return getResponseFromSimpleRef(swagger, ((RefModel) model1).getSimpleRef());
+                            } else {
+                                return getResponseProperties(swagger, model1.getProperties());
+                            }
+                        }
+                    )
+                )
                 .flatMap(m -> m.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
         } else {
@@ -147,15 +156,21 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
     }
 
     private Map<String, Object> getResponseProperties(Swagger swagger, Map<String, Property> properties) {
-        return properties.entrySet()
+        return properties
+            .entrySet()
             .stream()
-            .collect(toMap(Map.Entry::getKey, e -> {
-                final Property property = e.getValue();
-                if (property instanceof RefProperty) {
-                    return this.getResponseFromSimpleRef(swagger, ((RefProperty) property).getSimpleRef());
-                }
-                return this.getResponsePropertiesFromType(property.getType());
-            }));
+            .collect(
+                toMap(
+                    Map.Entry::getKey,
+                    e -> {
+                        final Property property = e.getValue();
+                        if (property instanceof RefProperty) {
+                            return this.getResponseFromSimpleRef(swagger, ((RefProperty) property).getSimpleRef());
+                        }
+                        return this.getResponsePropertiesFromType(property.getType());
+                    }
+                )
+            );
     }
 
     private Object getResponsePropertiesFromType(final String responseType) {
