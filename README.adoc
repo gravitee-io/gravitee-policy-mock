@@ -29,6 +29,15 @@ the gateway and a remote service or backend.
 
 When defining the response body content, you can use Expression Language to provide a dynamic mock response.
 
+== Compatibility with APIM
+
+|===
+| Plugin version | APIM version
+
+| Up to 1.x                   | All
+|===
+
+
 == Examples
 
 Note that you don't need to provide the `Content-Type` header, since the Mock policy can automatically detect the
