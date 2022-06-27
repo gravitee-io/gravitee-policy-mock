@@ -27,14 +27,15 @@ You can think of the policy as a contract-first approach -- you are able to crea
 Internally, this policy replaces the default HTTP invoker with a mock invoker. There are no more HTTP calls between
 the gateway and a remote service or backend.
 
+NOTE: The Mock policy will *not* cause the other policies to be skipped, regardless of its location in the flow.
+
 When defining the response body content, you can use Expression Language to provide a dynamic mock response.
 
 == Compatibility with APIM
 
 |===
 | Plugin version | APIM version
-
-| Up to 1.x                   | All
+| Up to 1.x      | All
 |===
 
 
