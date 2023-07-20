@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.1...1.13.2) (2023-07-20)
+
+
+### Bug Fixes
+
+* **deps:** bump dependency ([6bcf31d](https://github.com/gravitee-io/gravitee-policy-mock/commit/6bcf31d487ada2ec797e5f8c3a456490e7b718eb))
+
 ## [1.13.1](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.0...1.13.1) (2023-07-20)
 
 
