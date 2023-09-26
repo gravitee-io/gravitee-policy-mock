@@ -142,6 +142,9 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
     }
 
     private boolean isRefArray(OpenAPI oai, final String ref) {
+        if (oai.getComponents() == null) {
+            return false;
+        }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
         final Schema schema = oai.getComponents().getSchemas().get(simpleRef);
         return schema instanceof ArraySchema;
@@ -169,7 +172,7 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
     }
 
     private Object getResponseFromSimpleRef(OpenAPI oai, String ref) {
-        if (ref == null) {
+        if (ref == null || oai.getComponents() == null) {
             return null;
         }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
@@ -181,7 +184,11 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (properties == null) {
             return null;
         }
-        return properties.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> this.getSchemaValue(oai, e.getValue())));
+        return properties
+            .entrySet()
+            .stream()
+            .filter(e -> this.getSchemaValue(oai, e.getValue()) != null)
+            .collect(toMap(Map.Entry::getKey, e -> this.getSchemaValue(oai, e.getValue())));
     }
 
     private Object getSchemaValue(final OpenAPI oai, Schema schema) {
