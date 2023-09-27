@@ -122,8 +122,8 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
     }
 
     private void processResponseSchema(OpenAPI oai, Configuration configuration, String type, Schema responseSchema) {
+        configuration.setArray("array".equals(type));
         if (responseSchema.getProperties() == null) {
-            configuration.setArray("array".equals(type));
             if (responseSchema.getAdditionalProperties() != null) {
                 configuration.setResponse(
                     Collections.singletonMap("additionalProperty", ((Schema) responseSchema.getAdditionalProperties()).getType())

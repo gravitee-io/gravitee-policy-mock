@@ -1,0 +1,50 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "description": "",
+        "title": "API test",
+        "version": "1.0.0"
+    },
+    "tags": [],
+    "paths": {
+        "/resources": {
+            "get": {
+                "summary": "Get all instances of Resource",
+                "tags": ["Resource"],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Resource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Resource": {
+                "type": "object",
+                "properties": {
+                    "attribute1": {
+                        "type": "object",
+                        "properties": {
+                            "attribute2": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
