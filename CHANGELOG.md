@@ -1,3 +1,10 @@
+## [1.13.3](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.2...1.13.3) (2023-09-27)
+
+
+### Bug Fixes
+
+* handle no components in OpenAPI descriptor ([49904ac](https://github.com/gravitee-io/gravitee-policy-mock/commit/49904acccec6e668a0448475416ad36ab4198085))
+
 ## [1.13.2](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.1...1.13.2) (2023-07-20)
 
 
