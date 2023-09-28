@@ -1,3 +1,10 @@
+## [1.13.4](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.3...1.13.4) (2023-09-28)
+
+
+### Bug Fixes
+
+* handle array in response ([1f97ed8](https://github.com/gravitee-io/gravitee-policy-mock/commit/1f97ed82538fa162254762e3aad76507b0eb15df))
+
 ## [1.13.3](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.2...1.13.3) (2023-09-27)
 
 
