@@ -140,6 +140,7 @@
       "title": "Response body",
       "description": "The payload of the mocked response (support EL)",
       "type" : "string",
+      "format": "gio-code-editor",
       "x-schema-form": {
         "type": "codemirror",
         "codemirrorOptions": {
