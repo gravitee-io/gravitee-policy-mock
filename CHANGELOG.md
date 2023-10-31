@@ -1,3 +1,10 @@
+## [1.13.5](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.4...1.13.5) (2023-10-31)
+
+
+### Bug Fixes
+
+* jsonSchema - config code editor mode for new policy studio display ([d13ba38](https://github.com/gravitee-io/gravitee-policy-mock/commit/d13ba389ae7138f570e63efde848a72a23c40de2))
+
 ## [1.13.4](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.3...1.13.4) (2023-09-28)
 
 
