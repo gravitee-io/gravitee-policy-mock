@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
@@ -24,10 +25,12 @@ import io.gravitee.apim.gateway.tests.sdk.annotations.DeployApi;
 import io.gravitee.apim.gateway.tests.sdk.annotations.GatewayTest;
 import io.gravitee.policy.mock.MockPolicy;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
-import io.reactivex.observers.TestObserver;
-import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.ext.web.client.HttpResponse;
-import io.vertx.reactivex.ext.web.client.WebClient;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.core.http.HttpClient;
+import io.vertx.rxjava3.core.http.HttpClientRequest;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -41,21 +44,28 @@ class MockPolicyIntegrationTest extends AbstractPolicyTest<MockPolicy, MockPolic
 
     @Test
     @DisplayName("Should use mock without calling endpoint")
-    void shouldUseMock(WebClient client) {
+    @SneakyThrows
+    void shouldUseMock(HttpClient client) {
         wiremock.stubFor(get("/endpoint").willReturn(ok("response from backend")));
-
-        final TestObserver<HttpResponse<Buffer>> obs = client.get("/test").putHeader("reqHeader", "reqHeaderValue").rxSend().test();
-
-        awaitTerminalEvent(obs);
-        obs
-            .assertComplete()
-            .assertValue(response -> {
+        final TestObserver<Buffer> obs = client
+            .rxRequest(HttpMethod.GET, "/test")
+            .map(req -> req.putHeader("reqHeader", "reqHeaderValue"))
+            .flatMap(HttpClientRequest::rxSend)
+            .flatMap(response -> {
                 assertThat(response.statusCode()).isEqualTo(400);
-                assertThat(response.bodyAsString()).isEqualTo("mockContent");
                 assertThat(response.headers().contains("X-Mock-Policy")).isTrue();
                 assertThat(response.headers().get("X-Mock-Policy")).isEqualTo("Passed through mock policy");
                 assertThat(response.headers().contains("X-Mock-Policy-Second")).isTrue();
                 assertThat(response.headers().get("X-Mock-Policy-Second")).isEqualTo("reqHeaderValue");
+                return response.body();
+            })
+            .test();
+
+        awaitTerminalEvent(obs);
+        obs
+            .assertComplete()
+            .assertValue(body -> {
+                assertThat(body).hasToString("mockContent");
                 return true;
             })
             .assertNoErrors();
