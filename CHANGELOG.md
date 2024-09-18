@@ -1,3 +1,11 @@
+# [1.14.0](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.5...1.14.0) (2024-09-18)
+
+
+### Features
+
+* support mock policy on v4 proxy API request phase ([8251445](https://github.com/gravitee-io/gravitee-policy-mock/commit/825144534bc16c1d21218453b9dc1f6f471f5b43))
+* update schema-form for v4 policy studio ([ce1db74](https://github.com/gravitee-io/gravitee-policy-mock/commit/ce1db7436ebaa193d847623397fcf17bbfc95987))
+
 ## [1.13.5](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.4...1.13.5) (2023-10-31)
 
 
