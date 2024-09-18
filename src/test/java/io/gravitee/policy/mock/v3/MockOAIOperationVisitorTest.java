@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.gravitee.policy.mock.v3;
+
 import static org.assertj.core.api.Assertions.*;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -62,7 +64,7 @@ public class MockOAIOperationVisitorTest {
         Policy mockPolicyValue = mockPolicy.get();
 
         MockPolicyConfiguration expectedConfiguration = mapper.readValue(
-            this.getClass().getResourceAsStream(pathToExpectedConfiguration),
+            this.getClass().getClassLoader().getResourceAsStream(pathToExpectedConfiguration),
             MockPolicyConfiguration.class
         );
         assertThat(mockPolicyValue.getConfiguration()).isEqualTo(mapper.writeValueAsString(expectedConfiguration));

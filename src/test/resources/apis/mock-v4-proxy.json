@@ -1,0 +1,68 @@
+{
+    "id": "my-api",
+    "name": "my-api",
+    "apiVersion": "1.0",
+    "definitionVersion": "4.0.0",
+    "type": "proxy",
+    "listeners": [
+        {
+            "type": "http",
+            "paths": [
+                {
+                    "path": "/test"
+                }
+            ],
+            "entrypoints": [
+                {
+                    "type": "http-proxy"
+                }
+            ]
+        }
+    ],
+    "endpointGroups": [
+        {
+            "name": "default-group",
+            "type": "http-proxy",
+            "endpoints": [
+                {
+                    "name": "default",
+                    "type": "http-proxy",
+                    "weight": 1,
+                    "inheritConfiguration": false,
+                    "configuration": {
+                        "target": "http://localhost:8080/endpoint"
+                    }
+                }
+            ]
+        }
+    ],
+    "flows": [
+        {
+            "name": "flow-1",
+            "enabled": true,
+            "request": [
+                {
+                    "name": "Mock",
+                    "description": "Mock Policy on request",
+                    "enabled": true,
+                    "policy": "mock",
+                    "configuration": {
+                        "status": 400,
+                        "headers": [
+                            {
+                                "name": "X-Mock-Policy",
+                                "value": "Passed through mock policy"
+                            },
+                            {
+                                "name": "X-Mock-Policy-Second",
+                                "value": "{#request.headers['reqHeader'][0]}"
+                            }
+                        ],
+                        "content": "mockContent",
+                        "scope": "REQUEST"
+                    }
+                }
+            ]
+        }
+    ]
+}
