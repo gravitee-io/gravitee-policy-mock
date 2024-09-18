@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+    Copyright © 2015 The Gravitee team (http://gravitee.io)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
-            http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,7 @@
 
     <groupId>io.gravitee.policy</groupId>
     <artifactId>gravitee-policy-mock</artifactId>
-    <version>1.13.5</version>
+    <version>1.14.0</version>
 
     <name>Gravitee.io APIM - Policy - Mock</name>
     <description>Create mock responses when a consumer calls one of your services.</description>
@@ -30,16 +30,16 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>21.0.1</version>
+        <version>22.0.2</version>
     </parent>
 
     <properties>
-        <gravitee-apim-gateway-tests-sdk.version>3.20.32</gravitee-apim-gateway-tests-sdk.version>
-        <gravitee-bom.version>3.0.33</gravitee-bom.version>
-        <gravitee-common.version>2.3.0</gravitee-common.version>
-        <gravitee-expression-language.version>2.0.1</gravitee-expression-language.version>
-        <gravitee-gateway-api.version>2.0.3</gravitee-gateway-api.version>
+        <gravitee-bom.version>6.0.39</gravitee-bom.version>
+        <gravitee-common.version>3.4.1</gravitee-common.version>
+        <gravitee-expression-language.version>3.2.1</gravitee-expression-language.version>
+        <gravitee-gateway-api.version>3.2.3</gravitee-gateway-api.version>
         <gravitee-policy-api.version>1.11.0</gravitee-policy-api.version>
+        <gravitee-apim.version>4.1.24</gravitee-apim.version>
         <json-schema-generator-maven-plugin.version>1.3.0</json-schema-generator-maven-plugin.version>
         <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas</json-schema-generator-maven-plugin.outputDirectory>
         <swagger-parser.version>2.1.22</swagger-parser.version>
@@ -76,6 +76,12 @@
             <artifactId>gravitee-expression-language</artifactId>
             <version>${gravitee-expression-language.version}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.gravitee.node</groupId>
+                    <artifactId>gravitee-node-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -111,7 +117,7 @@
         <dependency>
             <groupId>io.gravitee.apim.gateway</groupId>
             <artifactId>gravitee-apim-gateway-tests-sdk</artifactId>
-            <version>${gravitee-apim-gateway-tests-sdk.version}</version>
+            <version>${gravitee-apim.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -130,6 +136,18 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.apim.plugin.entrypoint</groupId>
+            <artifactId>gravitee-apim-plugin-entrypoint-http-proxy</artifactId>
+            <version>${gravitee-apim.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.apim.plugin.endpoint</groupId>
+            <artifactId>gravitee-apim-plugin-endpoint-http-proxy</artifactId>
+            <version>${gravitee-apim.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
