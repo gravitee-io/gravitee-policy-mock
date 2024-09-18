@@ -35,7 +35,8 @@ When defining the response body content, you can use Expression Language to prov
 
 |===
 | Plugin version | APIM version
-| Up to 1.x      | All
+| Up to 1.13.5      | All
+| From 1.14.0      | 4.1.24+
 |===
 
 
