@@ -16,7 +16,6 @@
 package io.gravitee.policy.mock.swagger;
 
 import static java.util.Collections.*;
-import static java.util.stream.Collectors.toMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -32,9 +31,6 @@ import io.gravitee.policy.mock.configuration.HttpHeader;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
-import io.swagger.v3.oas.models.media.ArraySchema;
-import io.swagger.v3.oas.models.media.ComposedSchema;
-import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import java.util.*;
@@ -85,17 +81,12 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
                     configuration.setResponse(singletonMap(next.getKey(), next.getValue().getValue()));
                 } else {
                     final Schema responseSchema = mediaType.getSchema();
+
                     if (responseSchema != null) {
-                        if (responseSchema instanceof ArraySchema) {
-                            final ArraySchema arraySchema = (ArraySchema) responseSchema;
-                            processResponseSchema(oai, configuration, "array", arraySchema.getItems());
-                        } else {
-                            processResponseSchema(
-                                oai,
-                                configuration,
-                                responseSchema.getType() == null ? "object" : responseSchema.getType(),
-                                responseSchema
-                            );
+                        Object obj = extractExampleFromSchema(oai, responseSchema);
+
+                        if (obj != null) {
+                            configuration.setResponse(obj);
                         }
                     }
                 }
@@ -106,11 +97,7 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
             Policy policy = new Policy();
             policy.setName("mock");
             if (configuration.getResponse() != null) {
-                configuration.setContent(
-                    mapper.writeValueAsString(
-                        configuration.isArray() ? singletonList(configuration.getResponse()) : configuration.getResponse()
-                    )
-                );
+                configuration.setContent(mapper.writeValueAsString(configuration.getResponse()));
             }
             policy.setConfiguration(mapper.writeValueAsString(configuration));
             return Optional.of(policy);
@@ -121,139 +108,98 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         return Optional.empty();
     }
 
-    private void processResponseSchema(OpenAPI oai, Configuration configuration, String type, Schema responseSchema) {
-        configuration.setArray("array".equals(type));
-        if (responseSchema.getProperties() == null) {
-            if (responseSchema.getAdditionalProperties() != null) {
-                configuration.setResponse(
-                    Collections.singletonMap("additionalProperty", ((Schema) responseSchema.getAdditionalProperties()).getType())
-                );
-            } else if (responseSchema.get$ref() != null) {
-                if (!"array".equals(type)) {
-                    configuration.setArray(isRefArray(oai, responseSchema.get$ref()));
+    private Object extractExampleFromSchema(OpenAPI oai, Schema schema) {
+        if (schema.getExamples() != null) {
+            return schema.getExamples().get(0);
+        }
+        if (schema.getExample() != null) {
+            return schema.getExample();
+        }
+
+        if (schema.getEnum() != null) {
+            return schema.getEnum().get(0);
+        }
+
+        if (schema.getTypes() != null && schema.getTypes().contains("array") && schema.getItems() != null) {
+            return List.of(extractExampleFromSchema(oai, schema.getItems()));
+        }
+
+        if (schema.getTypes() != null) {
+            var validTypes = List.of("string", "boolean", "integer", "number");
+            final Set<String> schemaTypes = schema.getTypes();
+            String responseType = schemaTypes.stream().filter(t -> validTypes.contains(t)).findFirst().orElse(null);
+            if (responseType != null) {
+                final Random random = new Random();
+                switch (responseType) {
+                    case "string":
+                        return "Mocked string";
+                    case "boolean":
+                        return random.nextBoolean();
+                    case "integer":
+                        return random.nextInt(1000);
+                    case "number":
+                        return random.nextDouble();
                 }
-                configuration.setResponse(getResponseFromSimpleRef(oai, responseSchema.get$ref()));
-            } else {
-                configuration.setResponse(singletonMap(responseSchema.getType(), getResponsePropertiesFromType(responseSchema.getType())));
             }
-        } else {
-            configuration.setResponse(getResponseProperties(oai, responseSchema.getProperties()));
         }
+        Map<String, Object> objectResult = new HashMap<>();
+
+        if (schema.get$ref() != null) {
+            Schema refSchema = getSchema$Ref(oai, schema.get$ref());
+            Object refObject = extractExampleFromSchema(oai, refSchema);
+            if (refObject != null) {
+                if (refSchema.getTypes() != null && refSchema.getTypes().contains("object")) {
+                    objectResult.putAll((Map<String, Object>) refObject);
+                } else {
+                    return refObject;
+                }
+            }
+        }
+
+        if (schema.getProperties() != null) {
+            final Map<String, Schema> schemaProperties = schema.getProperties();
+            schemaProperties.forEach((key, value) -> {
+                Object subSchema = extractExampleFromSchema(oai, value);
+                if (subSchema != null) {
+                    objectResult.put(key, subSchema);
+                }
+            });
+        }
+        if (schema.getAdditionalProperties() != null) {
+            if (schema.getAdditionalProperties() instanceof Schema additionalProperties) {
+                // If the additional property is an empty object, we consider it as a string
+                if (additionalProperties.getTypes() == null || additionalProperties.getTypes().isEmpty()) {
+                    additionalProperties.setTypes(Set.of("string"));
+                }
+
+                objectResult.put("additionalProperty", extractExampleFromSchema(oai, additionalProperties));
+            } else {
+                // For 3.0.0, additionalProperties can be a boolean, we consider it as a string
+                Schema stringSchema = new Schema<>();
+                stringSchema.setTypes(Set.of("string"));
+                objectResult.put("additionalProperty", extractExampleFromSchema(oai, stringSchema));
+            }
+        }
+
+        if (schema.getAllOf() != null) {
+            final List<Schema> allOfSchema = schema.getAllOf();
+            allOfSchema.forEach(subSchema -> {
+                Object subSchemaExample = extractExampleFromSchema(oai, subSchema);
+                if (subSchemaExample != null) {
+                    objectResult.putAll((Map<String, Object>) subSchemaExample);
+                }
+            });
+        }
+
+        return objectResult.isEmpty() ? null : objectResult;
     }
 
-    private boolean isRefArray(OpenAPI oai, final String ref) {
-        if (oai.getComponents() == null) {
-            return false;
-        }
-        final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
-        final Schema schema = oai.getComponents().getSchemas().get(simpleRef);
-        return schema instanceof ArraySchema;
-    }
-
-    private Object getResponsePropertiesFromType(final String responseType) {
-        if (responseType == null) {
-            return null;
-        }
-        final Random random = new Random();
-        switch (responseType) {
-            case "string":
-                return "Mocked string";
-            case "boolean":
-                return random.nextBoolean();
-            case "integer":
-                return random.nextInt(1000);
-            case "number":
-                return random.nextDouble();
-            case "array":
-                return singletonList(getResponsePropertiesFromType("string"));
-            default:
-                return emptyMap();
-        }
-    }
-
-    private Object getResponseFromSimpleRef(OpenAPI oai, String ref) {
+    private Schema getSchema$Ref(OpenAPI oai, String ref) {
         if (ref == null || oai.getComponents() == null) {
             return null;
         }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
-        final Schema schema = oai.getComponents().getSchemas().get(simpleRef);
-        return getSchemaValue(oai, schema);
-    }
-
-    private Map<String, Object> getResponseProperties(final OpenAPI oai, final Map<String, Schema> properties) {
-        if (properties == null) {
-            return null;
-        }
-        return properties
-            .entrySet()
-            .stream()
-            .filter(e -> this.getSchemaValue(oai, e.getValue()) != null)
-            .collect(toMap(Map.Entry::getKey, e -> this.getSchemaValue(oai, e.getValue())));
-    }
-
-    private Object getSchemaValue(final OpenAPI oai, Schema schema) {
-        if (schema == null) {
-            return null;
-        }
-
-        final Object example = schema.getExample();
-        if (example != null) {
-            return example;
-        }
-
-        final List enums = schema.getEnum();
-        if (enums != null) {
-            return enums.get(0);
-        }
-
-        if (schema instanceof ObjectSchema) {
-            return getResponseProperties(oai, schema.getProperties());
-        }
-
-        if (schema instanceof ArraySchema) {
-            Schema<?> items = ((ArraySchema) schema).getItems();
-            Object sample = items.getExample();
-            if (sample != null) {
-                return singletonList(sample);
-            }
-
-            if (items.getEnum() != null) {
-                return singletonList(items.getEnum().get(0));
-            }
-
-            if (items.get$ref() != null) {
-                return getResponseFromSimpleRef(oai, items.get$ref());
-            }
-
-            return singleton(getResponsePropertiesFromType(items.getType()));
-        }
-
-        if (schema instanceof ComposedSchema) {
-            final Map<String, Object> response = new HashMap<>();
-            ((ComposedSchema) schema).getAllOf()
-                .forEach(composedSchema -> {
-                    if (composedSchema.get$ref() != null) {
-                        Object responseFromSimpleRef = getResponseFromSimpleRef(oai, composedSchema.get$ref());
-                        if (responseFromSimpleRef instanceof Map) {
-                            response.putAll((Map) responseFromSimpleRef);
-                        }
-                    }
-                    if (composedSchema.getProperties() != null) {
-                        response.putAll(getResponseProperties(oai, composedSchema.getProperties()));
-                    }
-                });
-            return response;
-        }
-
-        if (schema.getProperties() != null) {
-            return getResponseProperties(oai, schema.getProperties());
-        }
-
-        if (schema.get$ref() != null) {
-            return getResponseFromSimpleRef(oai, schema.get$ref());
-        }
-
-        return getResponsePropertiesFromType(schema.getType());
+        return oai.getComponents().getSchemas().get(simpleRef);
     }
 
     private class Configuration {
@@ -276,14 +222,6 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
 
         public void setResponse(Object response) {
             this.response = response;
-        }
-
-        public boolean isArray() {
-            return array;
-        }
-
-        public void setArray(boolean array) {
-            this.array = array;
         }
 
         public String getContent() {
