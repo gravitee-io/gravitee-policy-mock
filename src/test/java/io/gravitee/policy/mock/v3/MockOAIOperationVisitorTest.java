@@ -48,11 +48,13 @@ public class MockOAIOperationVisitorTest {
         value = {
             "openapi/array-response.json, /resources, openapi/array-response-expected.json",
             "openapi/simple-response.json, /resource, openapi/simple-response-expected.json",
+            "openapi/complex-response-v3.1.0.json, /resource, openapi/complex-response-v3.1.0-expected.json",
+            "openapi/complex-response-v3.0.0.json, /resource, openapi/complex-response-v3.0.0-expected.json",
         }
     )
     public void shouldGenerateMock(String pathToOpenAPI, String resourceName, String pathToExpectedConfiguration) throws IOException {
         ParseOptions options = new ParseOptions();
-        options.setResolveFully(true);
+        options.setResolveFully(false);
 
         OpenAPI openAPI = new OpenAPIParser().readLocation("src/test/resources/" + pathToOpenAPI, null, options).getOpenAPI();
 

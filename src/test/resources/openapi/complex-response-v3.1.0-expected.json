@@ -1,0 +1,10 @@
+{
+    "status": "200",
+    "headers": [
+        {
+            "name": "Content-Type",
+            "value": "application/json"
+        }
+    ],
+    "content": "{\n  \"result\" : [ {\n    \"bank_account_name\" : \"Mocked string\",\n    \"account_number\" : \"Mocked string\",\n    \"joint_client_guid\" : \"cli_22Gs87325ASdf798734\",\n    \"bank_institution\" : \"NBC\",\n    \"document\" : {\n      \"name\" : \"Document Name\",\n      \"guid\" : \"doc_22Gs87325ASdf798734\",\n      \"additionalProperty\" : \"Mocked string\",\n      \"code45\" : \"Mocked string\",\n      \"privateJoke\" : \"Mocked string\",\n      \"code46\" : \"Mocked string\"\n    },\n    \"is_joint_account\" : true,\n    \"transit_number\" : \"Mocked string\",\n    \"guid\" : \"Mocked string\",\n    \"currency\" : \"CAD\"\n  } ],\n  \"additionalProperty\" : \"Mocked string\",\n  \"message\" : \"Operation was a success\",\n  \"status\" : \"Success\"\n}"
+}
