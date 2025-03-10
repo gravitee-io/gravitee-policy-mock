@@ -200,6 +200,10 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (example != null) {
             return example;
         }
+        final List<?> examples = schema.getExamples();
+        if (examples != null && !examples.isEmpty()) {
+            return examples.get(0);
+        }
 
         final List enums = schema.getEnum();
         if (enums != null) {
@@ -210,8 +214,8 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
             return getResponseProperties(oai, schema.getProperties());
         }
 
-        if (schema instanceof ArraySchema) {
-            Schema<?> items = ((ArraySchema) schema).getItems();
+        if (schema instanceof ArraySchema || (schema.getTypes() != null && schema.getTypes().contains("array"))) {
+            Schema<?> items = schema.getItems();
             Object sample = items.getExample();
             if (sample != null) {
                 return singletonList(sample);
@@ -223,6 +227,10 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
 
             if (items.get$ref() != null) {
                 return getResponseFromSimpleRef(oai, items.get$ref());
+            }
+
+            if (items.getProperties() != null) {
+                return getResponseProperties(oai, items.getProperties());
             }
 
             return singleton(getResponsePropertiesFromType(items.getType()));
@@ -242,6 +250,21 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
                         response.putAll(getResponseProperties(oai, composedSchema.getProperties()));
                     }
                 });
+            return response;
+        } else if (schema.getAllOf() != null) {
+            List<Schema> allOf = schema.getAllOf();
+            Map<String, Object> response = new HashMap<>();
+            for (Schema s : allOf) {
+                if (s.get$ref() != null) {
+                    Object responseFromSimpleRef = getResponseFromSimpleRef(oai, s.get$ref());
+                    if (responseFromSimpleRef instanceof Map) {
+                        response.putAll((Map) responseFromSimpleRef);
+                    }
+                }
+                if (s.getProperties() != null) {
+                    response.putAll(getResponseProperties(oai, s.getProperties()));
+                }
+            }
             return response;
         }
 

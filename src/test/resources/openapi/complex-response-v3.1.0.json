@@ -1,0 +1,118 @@
+{
+    "openapi": "3.1.0",
+    "paths": {
+        "/resource": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response_list"
+                                }
+                            }
+                        },
+                        "description": "test"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "response_list": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "examples": ["Success"]
+                    },
+                    "message": {
+                        "type": "string",
+                        "examples": ["Operation was a success"]
+                    },
+                    "result": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/result_list"
+                        }
+                    }
+                },
+                "required": ["message", "result", "status"]
+            },
+            "result_list": {
+                "type": "object",
+                "properties": {
+                    "bank_institution": {
+                        "type": "string",
+                        "description": "This field contains the name of the bank",
+                        "examples": ["NBC"]
+                    },
+                    "currency": {
+                        "$ref": "#/components/schemas/currency_enum"
+                    },
+                    "is_joint_account": {
+                        "type": "boolean",
+                        "description": "Specifies whether or not this bank account has a joint owner.",
+                        "examples": [true]
+                    },
+                    "joint_client_guid": {
+                        "type": "string",
+                        "description": "Contains the guid of the co-owner if this bank account is joint.",
+                        "examples": ["cli_22Gs87325ASdf798734"]
+                    },
+                    "bank_account_name": {
+                        "type": "string"
+                    },
+                    "transit_number": {
+                        "type": "string"
+                    },
+                    "account_number": {
+                        "type": "string"
+                    },
+                    "guid": {
+                        "type": "string"
+                    },
+                    "document": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/bank_account_document"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "account_number",
+                    "bank_account_name",
+                    "bank_institution",
+                    "currency",
+                    "document",
+                    "guid",
+                    "is_joint_account",
+                    "joint_client_guid",
+                    "transit_number"
+                ]
+            },
+            "currency_enum": {
+                "enum": ["CAD", "USD"],
+                "type": "string",
+                "description": "Represents the currency for the current entity.",
+                "examples": ["CAD"]
+            },
+            "bank_account_document": {
+                "type": "object",
+                "properties": {
+                    "guid": {
+                        "type": "string",
+                        "examples": ["doc_22Gs87325ASdf798734"]
+                    },
+                    "name": {
+                        "type": "string",
+                        "examples": ["Document Name"]
+                    }
+                },
+                "required": ["guid", "name"]
+            }
+        }
+    }
+}

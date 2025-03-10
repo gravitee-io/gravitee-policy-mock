@@ -1,0 +1,10 @@
+{
+    "status": "200",
+    "headers": [
+        {
+            "name": "Content-Type",
+            "value": "application/json"
+        }
+    ],
+    "content": "{\n  \"result\" : {\n    \"joint_client_guid\" : \"cli_22Gs87325ASdf798734\",\n    \"bank_institution\" : \"NBC\",\n    \"document\" : {\n      \"name\" : \"Document Name\",\n      \"guid\" : \"doc_22Gs87325ASdf798734\"\n    },\n    \"is_joint_account\" : true,\n    \"currency\" : \"CAD\"\n  },\n  \"message\" : \"Operation was a success\",\n  \"status\" : \"Success\"\n}"
+}
