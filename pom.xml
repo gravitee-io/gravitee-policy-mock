@@ -22,7 +22,7 @@
 
     <groupId>io.gravitee.policy</groupId>
     <artifactId>gravitee-policy-mock</artifactId>
-    <version>1.14.0</version>
+    <version>1.14.1</version>
 
     <name>Gravitee.io APIM - Policy - Mock</name>
     <description>Create mock responses when a consumer calls one of your services.</description>

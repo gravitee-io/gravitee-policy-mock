@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.14.0...1.14.1) (2025-03-11)
+
+
+### Bug Fixes
+
+* rework response example extractor from schema ([9915115](https://github.com/gravitee-io/gravitee-policy-mock/commit/9915115fb013d1e175b705ec29b49f40da99be8a))
+
 # [1.14.0](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.13.5...1.14.0) (2024-09-18)
 
 
