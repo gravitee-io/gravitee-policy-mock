@@ -1,0 +1,28 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/client": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Client info",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "last_login": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2023-12-01T10:15:30+01:00"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
