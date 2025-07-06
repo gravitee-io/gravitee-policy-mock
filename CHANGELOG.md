@@ -1,3 +1,10 @@
+## [1.14.2](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.14.1...1.14.2) (2025-07-06)
+
+
+### Bug Fixes
+
+* ensure example values with 'string' + 'date-time' format are handled correctly ([1c31dea](https://github.com/gravitee-io/gravitee-policy-mock/commit/1c31dea2d037f08096ab7a71cbcf7ec84f2f7327))
+
 ## [1.14.1](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.14.0...1.14.1) (2025-03-11)
 
 
