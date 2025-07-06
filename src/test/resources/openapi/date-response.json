@@ -1,0 +1,28 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/client": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Client info",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "birth_date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "1995-08-15"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

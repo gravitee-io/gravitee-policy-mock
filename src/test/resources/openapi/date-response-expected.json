@@ -1,0 +1,10 @@
+{
+    "status": 200,
+    "headers": [
+        {
+            "name": "Content-Type",
+            "value": "application/json"
+        }
+    ],
+    "content": "{\n  \"birth_date\" : \"1995-08-15\"\n}"
+}

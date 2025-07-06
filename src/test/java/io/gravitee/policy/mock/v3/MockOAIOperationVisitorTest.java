@@ -50,6 +50,8 @@ public class MockOAIOperationVisitorTest {
             "openapi/simple-response.json, /resource, openapi/simple-response-expected.json",
             "openapi/complex-response-v3.1.0.json, /resource, openapi/complex-response-v3.1.0-expected.json",
             "openapi/complex-response-v3.0.0.json, /resource, openapi/complex-response-v3.0.0-expected.json",
+            "openapi/date-response.json, /client, openapi/date-response-expected.json",
+            "openapi/date-time-response.json, /client, openapi/date-time-response-expected.json",
         }
     )
     public void shouldGenerateMock(String pathToOpenAPI, String resourceName, String pathToExpectedConfiguration) throws IOException {

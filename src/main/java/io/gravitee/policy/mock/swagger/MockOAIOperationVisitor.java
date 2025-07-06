@@ -33,6 +33,14 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 /**
@@ -112,8 +120,15 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (schema.getExamples() != null) {
             return schema.getExamples().get(0);
         }
+        String format = schema.getFormat();
         if (schema.getExample() != null) {
+            if ("date".equals(format) || "date-time".equals(format)) {
+                return normalizeToDateFormat(schema.getExample().toString(), format);
+            }
             return schema.getExample();
+        }
+        if ("date".equals(format) || "date-time".equals(format)) {
+            return normalizeToDateFormat(null, format);
         }
 
         if (schema.getEnum() != null) {
@@ -200,6 +215,27 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
         return oai.getComponents().getSchemas().get(simpleRef);
+    }
+
+    private String normalizeToDateFormat(String input, String format) {
+        if (input == null || input.isBlank()) return "date".equals(format) ? LocalDate.now().toString() : OffsetDateTime.now().toString();
+        try {
+            if ("date".equals(format)) return LocalDate.parse(input).toString();
+            if ("date-time".equals(format)) return OffsetDateTime.parse(input).toString();
+            return input;
+        } catch (DateTimeParseException ignored) {}
+        try {
+            if ("date".equals(format)) return LocalDate.parse(input, DateTimeFormatter.ofPattern("yyyyMMdd")).toString();
+            if ("date-time".equals(format)) return ZonedDateTime.parse(input).toString();
+            return input;
+        } catch (DateTimeParseException ignored) {}
+        try {
+            var legacyFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+            var parsedDate = legacyFormat.parse(input);
+            if ("date".equals(format)) return new SimpleDateFormat("yyyy-MM-dd").format(parsedDate);
+            return OffsetDateTime.ofInstant(parsedDate.toInstant(), ZoneId.systemDefault()).toString();
+        } catch (ParseException ignored) {}
+        return "date".equals(format) ? LocalDate.now().toString() : OffsetDateTime.now().toString();
     }
 
     private class Configuration {
