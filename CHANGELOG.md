@@ -1,3 +1,10 @@
+# [1.15.0-alpha.1](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.14.2...1.15.0-alpha.1) (2025-11-07)
+
+
+### Features
+
+* enable for MCP Proxy API ([c58383b](https://github.com/gravitee-io/gravitee-policy-mock/commit/c58383bda293b63f7efa4c7933fca5828006d64b))
+
 ## [1.14.2](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.14.1...1.14.2) (2025-07-06)
 
 
