@@ -15,10 +15,6 @@
  */
 package io.gravitee.policy.mock;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import io.gravitee.apim.gateway.tests.sdk.AbstractPolicyTest;
 import io.gravitee.apim.gateway.tests.sdk.annotations.DeployApi;
 import io.gravitee.apim.gateway.tests.sdk.annotations.GatewayTest;
 import io.gravitee.apim.gateway.tests.sdk.connector.EndpointBuilder;
@@ -27,18 +23,12 @@ import io.gravitee.plugin.endpoint.EndpointConnectorPlugin;
 import io.gravitee.plugin.endpoint.http.proxy.HttpProxyEndpointConnectorFactory;
 import io.gravitee.plugin.entrypoint.EntrypointConnectorPlugin;
 import io.gravitee.plugin.entrypoint.http.proxy.HttpProxyEntrypointConnectorFactory;
-import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpClient;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.DisplayNameGeneration;
-import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
 @GatewayTest
-@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-class MockPolicyV4IntegrationTest extends AbstractPolicyTest<MockPolicy, MockPolicyConfiguration> {
+class MockPolicyV4IntegrationTest extends AbstractMockPolicyIntegrationTest {
 
     @Override
     public void configureEntrypoints(Map<String, EntrypointConnectorPlugin<?, ?>> entrypoints) {
@@ -51,31 +41,38 @@ class MockPolicyV4IntegrationTest extends AbstractPolicyTest<MockPolicy, MockPol
     }
 
     @Test
-    @DeployApi("/apis/mock-v4-proxy.json")
-    void should_use_mock_endpoint(HttpClient client) throws InterruptedException {
-        wiremock.stubFor(get("/endpoint").willReturn(ok("response from backend").withHeader("fakeHeader", "fakeValue")));
+    @DeployApi("/apis/v4/mock-v4.json")
+    void should_use_mock_endpoint(HttpClient client) {
+        assertMockResponseWithElHeadersAndBody("/v4-mock", client);
+    }
 
-        client
-            .request(HttpMethod.GET, "/test")
-            .flatMap(request -> request.putHeader("reqHeader", "reqHeaderValue").rxSend())
-            .flatMap(response -> {
-                assertThat(response.statusCode()).isEqualTo(400);
-                assertThat(response.headers().contains("X-Mock-Policy")).isTrue();
-                assertThat(response.headers().get("X-Mock-Policy")).isEqualTo("Passed through mock policy");
-                assertThat(response.headers().contains("X-Mock-Policy-Second")).isTrue();
-                assertThat(response.headers().get("X-Mock-Policy-Second")).isEqualTo("reqHeaderValue");
-                assertThat(response.headers().contains("fakeHeader")).isFalse();
-                return response.rxBody();
-            })
-            .test()
-            .awaitDone(30, TimeUnit.SECONDS)
-            .assertComplete()
-            .assertValue(body -> {
-                assertThat(body).hasToString("mockContent");
-                return true;
-            })
-            .assertNoErrors();
+    @Test
+    @DeployApi("/apis/v4/mock-v4-empty-content.json")
+    void should_have_empty_body_and_no_content_type_when_content_is_empty(HttpClient client) {
+        assertEmptyContentNoContentType("/v4-mock-empty-content", client);
+    }
 
-        wiremock.verify(0, getRequestedFor(anyUrl()));
+    @Test
+    @DeployApi("/apis/v4/mock-v4-content-type-predefined.json")
+    void should_not_override_predefined_content_type(HttpClient client) {
+        assertContentTypeNotOverridden("/v4-mock-content-type-predefined", client);
+    }
+
+    @Test
+    @DeployApi("/apis/v4/mock-v4-el-returns-null.json")
+    void should_return_500_when_el_returns_null(HttpClient client) {
+        assertElReturnsNullGives500("/v4-mock-el-returns-null", client);
+    }
+
+    @Test
+    @DeployApi("/apis/v4/mock-v4-el-syntax-error.json")
+    void should_return_500_when_el_has_syntax_error(HttpClient client) {
+        assertElSyntaxErrorGives500("/v4-mock-el-syntax-error", client);
+    }
+
+    @Test
+    @DeployApi("/apis/v4/mock-v4-header-el-error.json")
+    void should_ignore_header_with_el_error_silently(HttpClient client) {
+        assertHeaderElErrorIgnoredSilently("/v4-mock-header-el-error", client);
     }
 }

@@ -4,8 +4,9 @@
     "properties": {
         "status": {
             "title": "HTTP Status Code",
-            "description": "HTTP Status Code send to the consumer",
+            "description": "HTTP status code returned to the consumer in the mock response.",
             "type": "string",
+            "examples": ["200"],
             "enum": [
                 "100",
                 "101",
@@ -162,6 +163,7 @@
         "headers": {
             "type": "array",
             "title": "Headers",
+            "description": "Custom HTTP headers to include in the mock response. Header values support Expression Language.",
             "items": {
                 "type": "object",
                 "id": "urn:jsonschema:io:gravitee:policy:mock:configuration:HttpHeader",
@@ -186,8 +188,9 @@
         },
         "content": {
             "title": "Response body",
-            "description": "The payload of the mocked response (support EL)",
+            "description": "The body content of the mock response. Supports Expression Language for dynamic values.",
             "type": "string",
+            "examples": ["{\"message\": \"Hello World\"}"],
             "format": "gio-code-editor",
             "x-schema-form": {
                 "type": "codemirror",

@@ -1,0 +1,42 @@
+{
+    "id": "v2-mock-empty-content",
+    "name": "v2-mock-empty-content",
+    "gravitee": "2.0.0",
+    "proxy": {
+        "context_path": "/v2-mock-empty-content",
+        "endpoints": [
+            {
+                "name": "default",
+                "target": "http://localhost:8080/endpoint",
+                "http": {
+                    "connectTimeout": 3000,
+                    "readTimeout": 60000
+                }
+            }
+        ]
+    },
+    "flows": [
+        {
+            "name": "flow-1",
+            "methods": ["GET"],
+            "enabled": true,
+            "path-operator": {
+                "path": "/",
+                "operator": "STARTS_WITH"
+            },
+            "pre": [
+                {
+                    "name": "Mock",
+                    "enabled": true,
+                    "policy": "mock",
+                    "configuration": {
+                        "status": 204,
+                        "headers": [],
+                        "content": ""
+                    }
+                }
+            ],
+            "post": []
+        }
+    ]
+}

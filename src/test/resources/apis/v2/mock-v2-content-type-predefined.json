@@ -1,0 +1,47 @@
+{
+    "id": "v2-mock-content-type-predefined",
+    "name": "v2-mock-content-type-predefined",
+    "gravitee": "2.0.0",
+    "proxy": {
+        "context_path": "/v2-mock-content-type-predefined",
+        "endpoints": [
+            {
+                "name": "default",
+                "target": "http://localhost:8080/endpoint",
+                "http": {
+                    "connectTimeout": 3000,
+                    "readTimeout": 60000
+                }
+            }
+        ]
+    },
+    "flows": [
+        {
+            "name": "flow-1",
+            "methods": ["GET"],
+            "enabled": true,
+            "path-operator": {
+                "path": "/",
+                "operator": "STARTS_WITH"
+            },
+            "pre": [
+                {
+                    "name": "Mock",
+                    "enabled": true,
+                    "policy": "mock",
+                    "configuration": {
+                        "status": 200,
+                        "headers": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/custom+json"
+                            }
+                        ],
+                        "content": "{\"message\":\"hello\"}"
+                    }
+                }
+            ],
+            "post": []
+        }
+    ]
+}
