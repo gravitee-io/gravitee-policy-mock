@@ -134,15 +134,13 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
             return ((ComposedModel) model).getAllOf()
                 .stream()
                 .map(
-                    (
-                        model1 -> {
+                    (model1 -> {
                             if (model1 instanceof RefModel) {
                                 return getResponseFromSimpleRef(swagger, ((RefModel) model1).getSimpleRef());
                             } else {
                                 return getResponseProperties(swagger, model1.getProperties());
                             }
-                        }
-                    )
+                        })
                 )
                 .flatMap(m -> m.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -160,16 +158,13 @@ public class MockSwaggerOperationVisitor implements SwaggerOperationVisitor {
             .entrySet()
             .stream()
             .collect(
-                toMap(
-                    Map.Entry::getKey,
-                    e -> {
-                        final Property property = e.getValue();
-                        if (property instanceof RefProperty) {
-                            return this.getResponseFromSimpleRef(swagger, ((RefProperty) property).getSimpleRef());
-                        }
-                        return this.getResponsePropertiesFromType(property.getType());
+                toMap(Map.Entry::getKey, e -> {
+                    final Property property = e.getValue();
+                    if (property instanceof RefProperty) {
+                        return this.getResponseFromSimpleRef(swagger, ((RefProperty) property).getSimpleRef());
                     }
-                )
+                    return this.getResponsePropertiesFromType(property.getType());
+                })
             );
     }
 

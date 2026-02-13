@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.policy.mock.v3;
+package io.gravitee.policy.mock.swagger;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.gravitee.policy.api.swagger.Policy;
 import io.gravitee.policy.mock.configuration.MockPolicyConfiguration;
-import io.gravitee.policy.mock.swagger.MockOAIOperationVisitor;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;

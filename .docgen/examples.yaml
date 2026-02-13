@@ -1,0 +1,14 @@
+genExamples: []
+rawExamples:
+    - title: Mock a JSON response with Expression Language
+      templateRef: v4-api-proxy
+      language: json
+      properties:
+          phase: request
+      file: .docgen/examples/mock_json_response.json
+    - title: Mock a JSON response on MCP Proxy API
+      templateRef: v4-api-mcp-proxy
+      language: json
+      properties:
+          phase: request
+      file: .docgen/examples/mock_json_response.json

@@ -142,7 +142,11 @@ public class MockOAIOperationVisitor implements OAIOperationVisitor {
         if (schema.getTypes() != null) {
             var validTypes = List.of("string", "boolean", "integer", "number");
             final Set<String> schemaTypes = schema.getTypes();
-            String responseType = schemaTypes.stream().filter(t -> validTypes.contains(t)).findFirst().orElse(null);
+            String responseType = schemaTypes
+                .stream()
+                .filter(t -> validTypes.contains(t))
+                .findFirst()
+                .orElse(null);
             if (responseType != null) {
                 final Random random = new Random();
                 switch (responseType) {

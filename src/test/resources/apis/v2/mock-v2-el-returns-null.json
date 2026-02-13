@@ -1,9 +1,9 @@
 {
-    "id": "my-api",
-    "name": "my-api",
+    "id": "v2-mock-el-returns-null",
+    "name": "v2-mock-el-returns-null",
     "gravitee": "2.0.0",
     "proxy": {
-        "context_path": "/test",
+        "context_path": "/v2-mock-el-returns-null",
         "endpoints": [
             {
                 "name": "default",
@@ -27,22 +27,12 @@
             "pre": [
                 {
                     "name": "Mock",
-                    "description": "",
                     "enabled": true,
                     "policy": "mock",
                     "configuration": {
-                        "status": 400,
-                        "headers": [
-                            {
-                                "name": "X-Mock-Policy",
-                                "value": "Passed through mock policy"
-                            },
-                            {
-                                "name": "X-Mock-Policy-Second",
-                                "value": "{#request.headers['reqHeader'][0]}"
-                            }
-                        ],
-                        "content": "mockContent"
+                        "status": 200,
+                        "headers": [],
+                        "content": "{#request.headers['nonexistent']}"
                     }
                 }
             ],

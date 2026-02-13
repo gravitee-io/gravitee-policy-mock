@@ -1,0 +1,14 @@
+{
+    "status": "200",
+    "headers": [
+        {
+            "name": "Content-Type",
+            "value": "application/json"
+        },
+        {
+            "name": "Server",
+            "value": "Gravitee.io"
+        }
+    ],
+    "content": "{\"id\": \"{#request.paths[3]}\", \"name\": \"{#properties['name']}\"}"
+}

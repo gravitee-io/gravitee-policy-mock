@@ -15,12 +15,12 @@
  */
 package io.gravitee.policy.mock.utils;
 
-import io.gravitee.policy.mock.json.JSONArray;
-import io.gravitee.policy.mock.json.JSONException;
-import io.gravitee.policy.mock.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
@@ -28,28 +28,22 @@ import org.w3c.dom.Document;
  */
 public class StringUtils {
 
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final DocumentBuilderFactory XML_FACTORY = DocumentBuilderFactory.newInstance();
+
     public static boolean isJSON(String content) {
         try {
-            new JSONObject(content);
-        } catch (JSONException ex) {
-            try {
-                new JSONArray(content);
-            } catch (JSONException ex1) {
-                return false;
-            }
+            JsonNode node = JSON_MAPPER.readTree(content);
+            return node.isObject() || node.isArray();
+        } catch (Exception e) {
+            return false;
         }
-
-        return true;
     }
 
     public static boolean isXML(String content) {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setValidating(false);
-        factory.setNamespaceAware(true);
-
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(content);
+            DocumentBuilder builder = XML_FACTORY.newDocumentBuilder();
+            builder.parse(new InputSource(new StringReader(content)));
             return true;
         } catch (Exception ex) {
             return false;
