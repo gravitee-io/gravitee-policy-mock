@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.15.0...2.0.0) (2026-02-13)
+
+
+### Features
+
+* rewrite for V4 engine ([bd47642](https://github.com/gravitee-io/gravitee-policy-mock/commit/bd4764217e772d42af59e21b8c5365635b8744bd))
+
+
+### BREAKING CHANGES
+
+* compatible with APIM >= 4.11
+
 # [1.15.0](https://github.com/gravitee-io/gravitee-policy-mock/compare/1.14.2...1.15.0) (2025-12-11)
 
 
