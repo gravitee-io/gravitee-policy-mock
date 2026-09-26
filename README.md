@@ -76,11 +76,11 @@ The `mock` policy can be applied to the following API types and flow phases.
 ## Compatibility matrix
 Strikethrough text indicates that a version is deprecated.
 
-| Plugin version| APIM |
-| --- | ---  |
-|2.0.0 and after|4.11 and after |
-|1.14.0 to 1.15.x|4.1.24 and after |
-|Up to 1.13.5|All supported versions |
+| Plugin version| APIM| Java version |
+| --- | --- | ---  |
+|2.0.0 and after|4.11 and after|21 |
+|1.14.0 to 1.15.x|4.1.24 and after|17 |
+|Up to 1.13.5|All supported versions|11 |
 
 
 ## Configuration options
