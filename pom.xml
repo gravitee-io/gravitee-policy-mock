@@ -34,7 +34,7 @@
     </parent>
 
     <properties>
-        <gravitee-apim-bom.version>4.10.0</gravitee-apim-bom.version>
+        <gravitee-apim-bom.version>4.12.20</gravitee-apim-bom.version>
         <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas
         </json-schema-generator-maven-plugin.outputDirectory>
         <swagger-parser.version>2.1.25</swagger-parser.version>
