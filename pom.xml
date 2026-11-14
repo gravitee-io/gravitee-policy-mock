@@ -37,7 +37,7 @@
         <gravitee-apim-bom.version>4.10.0</gravitee-apim-bom.version>
         <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas
         </json-schema-generator-maven-plugin.outputDirectory>
-        <swagger-parser.version>2.1.25</swagger-parser.version>
+        <swagger-parser.version>2.1.48</swagger-parser.version>
 
         <!-- Property used by the publication job in CI-->
         <publish-folder-path>graviteeio-apim/plugins/policies</publish-folder-path>
