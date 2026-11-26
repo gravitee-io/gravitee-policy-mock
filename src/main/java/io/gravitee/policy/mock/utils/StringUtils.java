@@ -18,8 +18,10 @@ package io.gravitee.policy.mock.utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.StringReader;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.InputSource;
 
 /**
@@ -29,7 +31,25 @@ import org.xml.sax.InputSource;
 public class StringUtils {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-    private static final DocumentBuilderFactory XML_FACTORY = DocumentBuilderFactory.newInstance();
+    private static final DocumentBuilderFactory XML_FACTORY = newSecureDocumentBuilderFactory();
+
+    private static DocumentBuilderFactory newSecureDocumentBuilderFactory() {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try {
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (ParserConfigurationException e) {
+            throw new IllegalStateException("Unable to configure a secure XML parser", e);
+        }
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        return factory;
+    }
 
     public static boolean isJSON(String content) {
         try {
