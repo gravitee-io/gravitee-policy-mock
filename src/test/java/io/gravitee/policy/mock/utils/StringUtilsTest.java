@@ -17,15 +17,83 @@ package io.gravitee.policy.mock.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class StringUtilsTest {
+
+    private HttpServer server;
+    private final AtomicInteger requests = new AtomicInteger();
+
+    @BeforeEach
+    void startServer() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/", exchange -> {
+            requests.incrementAndGet();
+            byte[] body = "<!ENTITY y \"z\">".getBytes();
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+    }
+
+    @AfterEach
+    void stopServer() {
+        server.stop(0);
+    }
+
+    private String serverUrl(String path) {
+        return "http://" + server.getAddress().getHostString() + ":" + server.getAddress().getPort() + path;
+    }
+
+    @Test
+    void should_not_resolve_external_general_entity() {
+        String content = "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM \"" + serverUrl("/general") + "\">]><r>&x;</r>";
+
+        boolean result = StringUtils.isXML(content);
+
+        assertThat(requests).hasValue(0);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void should_not_resolve_external_parameter_entity() {
+        String content = "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY % p SYSTEM \"" + serverUrl("/parameter") + "\"> %p;]><r/>";
+
+        boolean result = StringUtils.isXML(content);
+
+        assertThat(requests).hasValue(0);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void should_not_load_external_dtd() {
+        String content = "<?xml version=\"1.0\"?><!DOCTYPE r SYSTEM \"" + serverUrl("/dtd") + "\"><r/>";
+
+        boolean result = StringUtils.isXML(content);
+
+        assertThat(requests).hasValue(0);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void should_not_detect_xml_declaring_a_doctype() {
+        assertThat(StringUtils.isXML("<!DOCTYPE r [<!ENTITY a \"b\">]><r>&a;</r>")).isFalse();
+    }
 
     @ParameterizedTest
     @MethodSource("jsonTestCases")

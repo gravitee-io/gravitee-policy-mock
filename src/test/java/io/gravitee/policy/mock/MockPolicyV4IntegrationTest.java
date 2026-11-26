@@ -15,16 +15,25 @@
  */
 package io.gravitee.policy.mock;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.gravitee.apim.gateway.tests.sdk.annotations.DeployApi;
 import io.gravitee.apim.gateway.tests.sdk.annotations.GatewayTest;
 import io.gravitee.apim.gateway.tests.sdk.connector.EndpointBuilder;
 import io.gravitee.apim.gateway.tests.sdk.connector.EntrypointBuilder;
+import io.gravitee.common.http.MediaType;
 import io.gravitee.plugin.endpoint.EndpointConnectorPlugin;
 import io.gravitee.plugin.endpoint.http.proxy.HttpProxyEndpointConnectorFactory;
 import io.gravitee.plugin.entrypoint.EntrypointConnectorPlugin;
 import io.gravitee.plugin.entrypoint.http.proxy.HttpProxyEntrypointConnectorFactory;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpClient;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 @GatewayTest
@@ -74,5 +83,32 @@ class MockPolicyV4IntegrationTest extends AbstractMockPolicyIntegrationTest {
     @DeployApi("/apis/v4/mock-v4-header-el-error.json")
     void should_ignore_header_with_el_error_silently(HttpClient client) {
         assertHeaderElErrorIgnoredSilently("/v4-mock-header-el-error", client);
+    }
+
+    @Test
+    @DeployApi("/apis/v4/mock-v4-request-header-content.json")
+    void should_not_resolve_external_entity_from_request_data(HttpClient client) {
+        wiremock.stubFor(get("/entity").willReturn(ok("entity")));
+        String content =
+            "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY x SYSTEM \"http://localhost:" + wiremock.port() + "/entity\">]><r>&x;</r>";
+
+        client
+            .request(HttpMethod.GET, "/v4-mock-request-header-content")
+            .flatMap(request -> request.putHeader("X-Mock-Content", content).rxSend())
+            .flatMap(response -> {
+                assertThat(response.statusCode()).isEqualTo(200);
+                assertThat(response.headers().get("Content-Type")).isEqualTo(MediaType.TEXT_PLAIN);
+                return response.rxBody();
+            })
+            .test()
+            .awaitDone(30, TimeUnit.SECONDS)
+            .assertComplete()
+            .assertValue(body -> {
+                assertThat(body).hasToString(content);
+                return true;
+            })
+            .assertNoErrors();
+
+        wiremock.verify(0, getRequestedFor(anyUrl()));
     }
 }
